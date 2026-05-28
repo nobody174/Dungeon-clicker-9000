@@ -1118,14 +1118,17 @@
     Object.keys(weapons).forEach(id => {
       const btn = document.getElementById("btn-" + id);
       if (!btn) return;
+      const costEl = btn.querySelector(".btn-cost");
       if (weaponsBought[id]) {
         btn.style.opacity = "0.45"; btn.style.cursor = "default";
-        const cost = btn.querySelector(".btn-cost");
-        if (cost) cost.textContent = "Purchased";
+        if (costEl) costEl.textContent = "Purchased";
+      } else {
+        btn.style.opacity = ""; btn.style.cursor = "";
+        if (costEl) costEl.textContent = "🪙 " + formatNum(weapons[id].cost) + "g";
       }
     });
     const b = weaponsBought;
-    const s = id => { const el = document.getElementById("btn-" + id); if (el) el.style.display = "flex"; };
+    const s = id => { const el = document.getElementById("btn-" + id); if (el) el.style.display = ""; };
     const h = id => { const el = document.getElementById("btn-" + id); if (el) el.style.display = "none"; };
     if (b.axe)         s("bow");         else h("bow");
     if (b.bow)         s("tome");        else h("tome");
