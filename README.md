@@ -50,14 +50,14 @@ Built from scratch in vanilla HTML, CSS and JavaScript over the course of one mo
 
                                                 ## 🚀 Running Locally
 
-                                                No build step needed. Just open `dungeon.html` in any browser.
+                                                No build step needed. Just open `index.html` in any browser.
 
                                                 ```bash
                                                 # Clone the repo
                                                 git clone https://github.com/nobody174/dungeon-idle.git
 
                                                 # Open the file
-                                                open dungeon-idle/dungeon.html
+                                                open dungeon-idle/index.html
                                                 ```
 
                                                 ---
@@ -66,7 +66,7 @@ Built from scratch in vanilla HTML, CSS and JavaScript over the course of one mo
 
                                                 ```
                                                 dungeon-idle/
-                                                └── dungeon.html    # The entire game — HTML, CSS and JS in one file
+                                                └── index.html    # The entire game — HTML, CSS and JS in one file
                                                 ```
 
                                                 ---
