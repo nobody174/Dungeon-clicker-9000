@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Dungeon Crawler</title>
+  <title>Delve</title>
   <style>
     * { box-sizing: border-box; }
 
@@ -499,104 +499,6 @@ box-shadow:
     @keyframes gold-pulse { 0%{color:#ffd36b} 25%{color:#fff;text-shadow:0 0 12px #ffd700} 100%{color:#ffd36b} }
     .gold-display.flash { animation:gold-pulse 0.45s ease-out; }
 
-    /* ── Combat arena ── */
-    .arena {
-      width: 100%;
-      background:
-        repeating-linear-gradient(90deg, transparent, transparent 48px, rgba(0,0,0,0.18) 48px, rgba(0,0,0,0.18) 50px),
-        linear-gradient(180deg, #0d1018 0%, #151a26 55%, #0c0f18 100%);
-      border: 1px solid #2a2d3a;
-      border-radius: 10px;
-      margin-bottom: 0.6rem;
-      position: relative;
-      overflow: hidden;
-    }
-    .arena::before {
-      content: '';
-      position: absolute; inset: 0;
-      background:
-        radial-gradient(ellipse 60% 30% at 50% 100%, rgba(80,60,20,0.18) 0%, transparent 70%);
-      pointer-events: none;
-    }
-    .arena::after {
-      content: '';
-      position: absolute; bottom: 44px; left: 0; right: 0;
-      height: 2px;
-      background: linear-gradient(90deg, transparent, rgba(139,107,45,0.35) 20%, rgba(139,107,45,0.35) 80%, transparent);
-      pointer-events: none;
-    }
-    .arena-scene {
-      display: flex;
-      align-items: flex-end;
-      min-height: 170px;
-      padding: 1rem 0.5rem 0.2rem;
-    }
-    .player-side {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 0;
-    }
-    .monster-side {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 0;
-      margin-bottom: 0;
-    }
-    .player-emoji {
-      font-size: 4rem;
-      line-height: 1;
-      filter: drop-shadow(0 0 8px rgba(201,168,76,0.3));
-      display: inline-block;
-    }
-    @keyframes player-lunge {
-      0%   { transform: translateX(0) scale(1); }
-      45%  { transform: translateX(38px) scale(1.14); }
-      100% { transform: translateX(0) scale(1); }
-    }
-    .player-emoji.lunging { animation: player-lunge 0.32s ease-out; }
-    @keyframes monster-recoil {
-      0%   { transform: translateX(0); }
-      35%  { transform: translateX(18px); }
-      100% { transform: translateX(0); }
-    }
-    .monster-side.recoil { animation: monster-recoil 0.26s ease-out; }
-    .char-shadow {
-      width: 44px; height: 8px;
-      background: radial-gradient(ellipse, rgba(0,0,0,0.55) 0%, transparent 75%);
-      margin-top: -4px;
-    }
-    .player-label {
-      font-size: 0.58rem;
-      color: #6a5520;
-      letter-spacing: 2px;
-      text-transform: uppercase;
-      margin-top: 2px;
-    }
-    .arena-hp-wrap {
-      padding: 0.1rem 0.9rem 0.7rem;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 0.2rem;
-    }
-    .arena-hp-wrap .hp-bar-wrap { width: 100%; }
-
-    /* ── Passive float numbers ── */
-    @keyframes float-passive {
-      0%   { opacity: 0.9; transform: translate(var(--dx,0px), 0) scale(1); }
-      80%  { opacity: 0.7; }
-      100% { opacity: 0; transform: translate(var(--dx,0px), -48px) scale(0.8); }
-    }
-    .dmg-float.passive {
-      color: #88bbff;
-      font-size: 0.9rem;
-      animation: float-passive 1.1s ease-out forwards;
-    }
-
   @media (max-width: 600px) {
 
   body {
@@ -638,7 +540,7 @@ box-shadow:
 </head>
 <body>
 
-<h1>Dungeon Crawler</h1>
+<h1>Delve</h1>
 
 <div id="offline-banner" class="offline-banner" style="display:none">
   <span id="offline-text"></span>
@@ -658,24 +560,11 @@ box-shadow:
     </div>
     <div id="save-indicator">Saved ✓</div>
 
-    <div class="arena">
-      <div class="arena-bg"></div>
-      <div class="arena-scene">
-        <div class="player-side">
-          <div class="player-emoji" id="player-emoji">🧙‍♂️</div>
-          <div class="char-shadow"></div>
-          <div class="player-label">Hero</div>
-        </div>
-        <div class="monster-side monster-area" id="monster-area">
-          <div class="monster-emoji" id="monster-emoji">🟢</div>
-          <div class="char-shadow"></div>
-          <div class="monster-name" id="monster-name">Slime</div>
-        </div>
-      </div>
-      <div class="arena-hp-wrap">
-        <div class="hp-bar-wrap"><div class="hp-bar-fill" id="hp-fill"></div></div>
-        <div class="hp-text" id="hp-text">HP: 40 / 40</div>
-      </div>
+    <div class="monster-area" id="monster-area">
+      <div class="monster-emoji" id="monster-emoji">🟢</div>
+      <div class="monster-name" id="monster-name">Slime</div>
+      <div class="hp-bar-wrap"><div class="hp-bar-fill" id="hp-fill"></div></div>
+      <div class="hp-text" id="hp-text">HP: 40 / 40</div>
     </div>
 
     <div id="kill-msg" class="kill-msg"></div>
@@ -1342,54 +1231,11 @@ box-shadow:
     setTimeout(() => el.remove(), dur);
   }
 
-  function triggerLunge() {
-    const el = document.getElementById("player-emoji");
-    if (!el) return;
-    el.classList.remove("lunging");
-    void el.offsetWidth;
-    el.classList.add("lunging");
-  }
-
   function flashMonster() {
-    const emoji = document.getElementById("monster-emoji");
-    emoji.classList.remove("hit");
-    void emoji.offsetWidth;
-    emoji.classList.add("hit");
-    const side = emoji.closest(".monster-side");
-    if (side) {
-      side.classList.remove("recoil");
-      void side.offsetWidth;
-      side.classList.add("recoil");
-    }
-  }
-
-  function spawnPassiveFloats() {
-    const emojiEl = document.getElementById("monster-emoji");
-    if (!emojiEl) return;
-    const rect = emojiEl.getBoundingClientRect();
-    const cx   = rect.left + rect.width / 2;
-    const cy   = rect.top  + rect.height / 2;
-    const effDPSMult = 1 + getTotalMult("dpsMult");
-    const contributors = [
-      { id: "squire", count: units.squire.count, dps: units.squire.dps },
-      { id: "rogue",  count: units.rogue.count,  dps: units.rogue.dps  },
-      { id: "mage",   count: units.mage.count,   dps: units.mage.dps   },
-    ].filter(u => u.count > 0);
-    if (!contributors.length) return;
-    contributors.forEach((u, i) => {
-      const dmg   = Math.floor(u.count * u.dps * effDPSMult);
-      const side  = (i % 2 === 0) ? -1 : 1;
-      const offsetX = (Math.random() * 30 + 10) * side;
-      const offsetY = Math.random() * 20 - 10;
-      const el = document.createElement("div");
-      el.className = "dmg-float passive";
-      el.textContent = "-" + formatNum(dmg);
-      el.style.left = (cx + offsetX - 12) + "px";
-      el.style.top  = (cy + offsetY - 20) + "px";
-      el.style.setProperty("--dx", (offsetX * 0.8) + "px");
-      document.body.appendChild(el);
-      setTimeout(() => el.remove(), 1200);
-    });
+    const el = document.getElementById("monster-emoji");
+    el.classList.remove("hit");
+    void el.offsetWidth;
+    el.classList.add("hit");
   }
 
   function showKillMsg(amount, isBoss) {
@@ -1646,7 +1492,6 @@ box-shadow:
     if (monsterDead) return;
     initAudio();
     playClickSound();
-    triggerLunge();
 
     const gorak      = heroes.find(h => h.id === "gorak");
     const critChance = gorak && gorak.unlocked
@@ -1950,7 +1795,7 @@ box-shadow:
     if (passiveDamage > 0) {
       const eff = Math.floor(passiveDamage * (1 + getTotalMult("dpsMult")));
       if (monsterDead) { damageBuffer += eff; }
-      else { spawnPassiveFloats(); dealDamage(eff); }
+      else { dealDamage(eff); }
     }
   }, 1000);
 
