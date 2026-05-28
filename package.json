@@ -1,0 +1,14 @@
+{
+  "name": "delve",
+  "version": "1.0.0",
+  "description": "A browser-based dungeon idle game",
+  "scripts": {
+    "test": "playwright test",
+    "test:ui": "playwright test --ui",
+    "serve": "serve . -p 3000"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.44.0",
+    "serve": "^14.2.0"
+  }
+}

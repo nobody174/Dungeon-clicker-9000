@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Delve</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700&family=MedievalSharp&display=swap" rel="stylesheet">
   <style>
     * { box-sizing: border-box; }
 
@@ -20,11 +21,13 @@
     }
 
     h1 {
-      font-size: 2.8rem;
+      font-family: 'Cinzel Decorative', 'MedievalSharp', Georgia, serif;
+      font-size: 5rem;
+      font-weight: 700;
       color: #c9a84c;
       margin: 0 0 1.2rem;
-      letter-spacing: 5px;
-      text-shadow: 0 0 24px rgba(201,168,76,0.45);
+      letter-spacing: 3px;
+      text-shadow: 0 0 28px rgba(201,168,76,0.55), 0 2px 4px rgba(0,0,0,0.8);
     }
 
     h2 {
@@ -52,36 +55,27 @@
 
     /* ── Two-column layout ── */
     .layout {
-      display: flex; gap: 1.5rem; align-items: flex-start;
+      display: flex; gap: 1.5rem; align-items: stretch;
       width: 100%; max-width: 860px;
     }
 
     .game-panel {
       flex: 1; position: relative;
       display: flex; flex-direction: column; align-items: center;
-      background:
-  linear-gradient(to bottom, #1d2230, #121520);
-
-border: 2px solid #8b6b2d;
-
-box-shadow:
-  inset 0 0 18px rgba(0,0,0,0.6),
-  0 0 18px rgba(0,0,0,0.35); border-radius: 14px;
+      background: linear-gradient(to bottom, #1d2230, #121520);
+      border: 2px solid #8b6b2d;
+      box-shadow: inset 0 0 18px rgba(0,0,0,0.6), 0 0 18px rgba(0,0,0,0.35);
+      border-radius: 14px;
       padding: 1.5rem 1.5rem 2.5rem;
     }
 
     .right-panel {
-      flex: 1; background:
-  linear-gradient(to bottom, #1b2030, #121520);
-
-border: 2px solid #8b6b2d;
-
-box-shadow:
-  inset 0 0 18px rgba(0,0,0,0.6),
-  0 0 18px rgba(0,0,0,0.35);
+      flex: 1; background: linear-gradient(to bottom, #1b2030, #121520);
+      border: 2px solid #8b6b2d;
+      box-shadow: inset 0 0 18px rgba(0,0,0,0.6), 0 0 18px rgba(0,0,0,0.35);
       border-radius: 14px; padding: 0;
       display: flex; flex-direction: column;
-      min-height: 400px;
+      min-height: 400px; overflow: hidden;
     }
 
     /* ── Mute button ── */
@@ -158,7 +152,32 @@ box-shadow:
     .boss-badge   { font-size:0.72rem; color:#ffd700; border:1px solid #6e5520; background:rgba(255,215,0,0.1); padding:0.15rem 0.5rem; border-radius:4px; display:none; }
     .prestige-badge { font-size:0.65rem; color:#cc99ff; background:linear-gradient(135deg,#2d1060,#4d20a0); padding:0.12rem 0.45rem; border-radius:3px; border:1px solid #7040a0; display:none; }
     .tab-dot   { color:#9090ff; font-size:0.55rem; vertical-align:super; margin-left:2px; }
-    .tab-content { padding:1rem 1.5rem 2rem; }
+    .tab-content { padding:1rem 1.5rem 2rem; flex: 1; min-height: 0; overflow-y: auto; }
+    #tab-shop { padding: 0; overflow: hidden; display: flex; flex-direction: column; }
+
+    /* ── Shop sub-tabs ── */
+    .sub-tab-bar {
+      display: flex; gap: 0.25rem; padding: 0.55rem 0.6rem 0;
+      border-bottom: 1px solid #2a2d3a; flex-shrink: 0;
+    }
+    .sub-tab-btn {
+      flex: 1; padding: 0.42rem 0.5rem;
+      background: linear-gradient(to bottom, #22263a, #181c28);
+      border: 1px solid #2a2d3a; border-bottom: none;
+      border-radius: 5px 5px 0 0; color: #5a6080;
+      font-family: Georgia, serif; font-size: 0.7rem;
+      letter-spacing: 0.5px; cursor: pointer;
+      transition: all 0.15s;
+    }
+    .sub-tab-btn.active {
+      background: linear-gradient(to bottom, #2a2418, #1a1610);
+      color: #c9a84c; border-color: #5d4720;
+    }
+    .sub-tab-btn:hover:not(.active) { color: #9090b0; border-color: #3a3a5a; }
+    .sub-tab-content {
+      flex: 1; min-height: 0; overflow-y: auto;
+      padding: 0.7rem 1.2rem 1rem;
+    }
     .hidden    { display:none !important; }
     #save-indicator { position:absolute; bottom:0.5rem; right:0.75rem; font-size:0.62rem; color:#5c8050; opacity:0; transition:opacity 0.5s ease; pointer-events:none; letter-spacing:1px; }
     .attack-btn small { display:block; font-size:0.7rem; font-weight:normal; color:rgba(0,0,0,0.5); letter-spacing:0; margin-top:0.1rem; }
@@ -499,6 +518,80 @@ box-shadow:
     @keyframes gold-pulse { 0%{color:#ffd36b} 25%{color:#fff;text-shadow:0 0 12px #ffd700} 100%{color:#ffd36b} }
     .gold-display.flash { animation:gold-pulse 0.45s ease-out; }
 
+    /* ── Combat arena ── */
+    .arena {
+      width: 100%;
+      background:
+        repeating-linear-gradient(90deg, transparent, transparent 48px, rgba(0,0,0,0.18) 48px, rgba(0,0,0,0.18) 50px),
+        linear-gradient(180deg, #0d1018 0%, #151a26 55%, #0c0f18 100%);
+      border: 1px solid #2a2d3a;
+      border-radius: 10px;
+      margin-bottom: 0.6rem;
+      position: relative;
+      overflow: hidden;
+    }
+    .arena::before {
+      content: '';
+      position: absolute; inset: 0;
+      background: radial-gradient(ellipse 60% 30% at 50% 100%, rgba(80,60,20,0.18) 0%, transparent 70%);
+      pointer-events: none;
+    }
+    .arena::after {
+      content: '';
+      position: absolute; bottom: 44px; left: 0; right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, rgba(139,107,45,0.35) 20%, rgba(139,107,45,0.35) 80%, transparent);
+      pointer-events: none;
+    }
+    .arena-scene {
+      display: flex; align-items: flex-end; min-height: 170px; padding: 1rem 0.5rem 0.2rem;
+    }
+    .player-side {
+      flex: 1; display: flex; flex-direction: column; align-items: center; gap: 0;
+    }
+    .monster-side {
+      flex: 1; display: flex; flex-direction: column; align-items: center; gap: 0;
+    }
+    .player-emoji {
+      font-size: 4rem; line-height: 1;
+      filter: drop-shadow(0 0 8px rgba(201,168,76,0.3));
+      display: inline-block;
+    }
+    @keyframes player-lunge {
+      0%   { transform: translateX(0) scale(1); }
+      45%  { transform: translateX(38px) scale(1.14); }
+      100% { transform: translateX(0) scale(1); }
+    }
+    .player-emoji.lunging { animation: player-lunge 0.32s ease-out; }
+    @keyframes monster-recoil {
+      0%   { transform: translateX(0); }
+      35%  { transform: translateX(18px); }
+      100% { transform: translateX(0); }
+    }
+    .monster-side.recoil { animation: monster-recoil 0.26s ease-out; }
+    .char-shadow {
+      width: 44px; height: 8px;
+      background: radial-gradient(ellipse, rgba(0,0,0,0.55) 0%, transparent 75%);
+      margin-top: -4px;
+    }
+    .player-label {
+      font-size: 0.58rem; color: #6a5520; letter-spacing: 2px;
+      text-transform: uppercase; margin-top: 2px;
+    }
+    .arena-hp-wrap {
+      padding: 0.1rem 0.9rem 0.7rem; display: flex;
+      flex-direction: column; align-items: center; gap: 0.2rem;
+    }
+    .arena-hp-wrap .hp-bar-wrap { width: 100%; }
+
+    /* ── Passive float numbers ── */
+    @keyframes float-passive {
+      0%   { opacity: 0.9; transform: translate(var(--dx,0px), 0) scale(1); }
+      80%  { opacity: 0.7; }
+      100% { opacity: 0; transform: translate(var(--dx,0px), -48px) scale(0.8); }
+    }
+    .dmg-float.passive { color: #88bbff; font-size: 0.9rem; animation: float-passive 1.1s ease-out forwards; }
+
   @media (max-width: 600px) {
 
   body {
@@ -560,11 +653,23 @@ box-shadow:
     </div>
     <div id="save-indicator">Saved ✓</div>
 
-    <div class="monster-area" id="monster-area">
-      <div class="monster-emoji" id="monster-emoji">🟢</div>
-      <div class="monster-name" id="monster-name">Slime</div>
-      <div class="hp-bar-wrap"><div class="hp-bar-fill" id="hp-fill"></div></div>
-      <div class="hp-text" id="hp-text">HP: 40 / 40</div>
+    <div class="arena">
+      <div class="arena-scene">
+        <div class="player-side">
+          <div class="player-emoji" id="player-emoji">🧙‍♂️</div>
+          <div class="char-shadow"></div>
+          <div class="player-label">Hero</div>
+        </div>
+        <div class="monster-side monster-area" id="monster-area">
+          <div class="monster-emoji" id="monster-emoji">🟢</div>
+          <div class="char-shadow"></div>
+          <div class="monster-name" id="monster-name">Slime</div>
+        </div>
+      </div>
+      <div class="arena-hp-wrap">
+        <div class="hp-bar-wrap"><div class="hp-bar-fill" id="hp-fill"></div></div>
+        <div class="hp-text" id="hp-text">HP: 40 / 40</div>
+      </div>
     </div>
 
     <div id="kill-msg" class="kill-msg"></div>
@@ -594,34 +699,65 @@ box-shadow:
 
     <!-- Shop tab -->
     <div id="tab-shop" class="tab-content">
-      <h2>⚔️ Weapons</h2>
-      <button id="btn-sword" class="upgrade-btn" onclick="buyUpgrade('sword')">
-        <span class="btn-left"><span class="btn-name">🗡️ Better Sword</span><span class="btn-effect">+5 click damage</span></span>
-        <span class="btn-right"><span class="btn-cost">🪙 60g</span></span>
-      </button>
-      <button id="btn-gloves" class="upgrade-btn" onclick="buyUpgrade('gloves')">
-        <span class="btn-left"><span class="btn-name">🧤 Iron Gloves</span><span class="btn-effect">+10 click damage</span></span>
-        <span class="btn-right"><span class="btn-cost">🪙 300g</span></span>
-      </button>
-      <button id="btn-axe" class="upgrade-btn" onclick="buyUpgrade('axe')">
-        <span class="btn-left"><span class="btn-name">🪓 Battle Axe</span><span class="btn-effect">+25 click damage</span></span>
-        <span class="btn-right"><span class="btn-cost">🪙 1,000g</span></span>
-      </button>
+      <div class="sub-tab-bar">
+        <button class="sub-tab-btn active" onclick="showShopTab('weapons')">⚔️ Weapons</button>
+        <button class="sub-tab-btn" onclick="showShopTab('units')">👥 Units</button>
+      </div>
 
-      <h2>👥 Units</h2>
-      <button class="upgrade-btn" onclick="buyUnit('squire')">
-        <span class="btn-left"><span class="btn-name">🛡️ Squire</span><span class="btn-effect">+2 dmg / sec</span></span>
-        <span class="btn-right"><span class="btn-cost" id="cost-squire">🪙 200g</span><span class="count" id="count-squire">owned: 0</span></span>
-      </button>
-      <button class="upgrade-btn" onclick="buyUnit('rogue')">
-        <span class="btn-left"><span class="btn-name">🗡️ Rogue</span><span class="btn-effect">+5 dmg / sec</span></span>
-        <span class="btn-right"><span class="btn-cost" id="cost-rogue">🪙 500g</span><span class="count" id="count-rogue">owned: 0</span></span>
-      </button>
-      <button class="upgrade-btn" onclick="buyUnit('mage')">
-        <span class="btn-left"><span class="btn-name">🧙 Mage</span><span class="btn-effect">+15 dmg / sec</span></span>
-        <span class="btn-right"><span class="btn-cost" id="cost-mage">🪙 1,500g</span><span class="count" id="count-mage">owned: 0</span></span>
-      </button>
-      <div class="shop-msg" id="shop-msg"></div>
+      <div id="subtab-weapons" class="sub-tab-content">
+        <button id="btn-sword" class="upgrade-btn" onclick="buyUpgrade('sword')">
+          <span class="btn-left"><span class="btn-name">🗡️ Better Sword</span><span class="btn-effect">+5 click damage</span></span>
+          <span class="btn-right"><span class="btn-cost">🪙 60g</span></span>
+        </button>
+        <button id="btn-gloves" class="upgrade-btn" onclick="buyUpgrade('gloves')">
+          <span class="btn-left"><span class="btn-name">🧤 Iron Gloves</span><span class="btn-effect">+10 click damage</span></span>
+          <span class="btn-right"><span class="btn-cost">🪙 300g</span></span>
+        </button>
+        <button id="btn-axe" class="upgrade-btn" onclick="buyUpgrade('axe')">
+          <span class="btn-left"><span class="btn-name">🪓 Battle Axe</span><span class="btn-effect">+25 click damage</span></span>
+          <span class="btn-right"><span class="btn-cost">🪙 1,000g</span></span>
+        </button>
+        <button id="btn-bow" class="upgrade-btn" onclick="buyUpgrade('bow')" style="display:none">
+          <span class="btn-left"><span class="btn-name">🏹 Elven Bow</span><span class="btn-effect">+20 click damage</span></span>
+          <span class="btn-right"><span class="btn-cost">🪙 2,500g</span></span>
+        </button>
+        <button id="btn-tome" class="upgrade-btn" onclick="buyUpgrade('tome')" style="display:none">
+          <span class="btn-left"><span class="btn-name">🔮 Spell Tome</span><span class="btn-effect">+35 click damage</span></span>
+          <span class="btn-right"><span class="btn-cost">🪙 7,500g</span></span>
+        </button>
+        <button id="btn-stormstrike" class="upgrade-btn" onclick="buyUpgrade('stormstrike')" style="display:none">
+          <span class="btn-left"><span class="btn-name">⚡ Stormstrike</span><span class="btn-effect">+80 click damage</span></span>
+          <span class="btn-right"><span class="btn-cost">🪙 25,000g</span></span>
+        </button>
+        <button id="btn-shadowreaper" class="upgrade-btn" onclick="buyUpgrade('shadowreaper')" style="display:none">
+          <span class="btn-left"><span class="btn-name">🌑 Shadowreaper</span><span class="btn-effect">+150 click damage</span></span>
+          <span class="btn-right"><span class="btn-cost">🪙 100,000g</span></span>
+        </button>
+      </div>
+
+      <div id="subtab-units" class="sub-tab-content" style="display:none">
+        <button class="upgrade-btn" onclick="buyUnit('squire')">
+          <span class="btn-left"><span class="btn-name">🛡️ Squire</span><span class="btn-effect">+2 dmg / sec</span></span>
+          <span class="btn-right"><span class="btn-cost" id="cost-squire">🪙 200g</span><span class="count" id="count-squire">owned: 0</span></span>
+        </button>
+        <button class="upgrade-btn" onclick="buyUnit('rogue')">
+          <span class="btn-left"><span class="btn-name">🗡️ Rogue</span><span class="btn-effect">+5 dmg / sec</span></span>
+          <span class="btn-right"><span class="btn-cost" id="cost-rogue">🪙 500g</span><span class="count" id="count-rogue">owned: 0</span></span>
+        </button>
+        <button class="upgrade-btn" onclick="buyUnit('mage')">
+          <span class="btn-left"><span class="btn-name">🧙 Mage</span><span class="btn-effect">+15 dmg / sec</span></span>
+          <span class="btn-right"><span class="btn-cost" id="cost-mage">🪙 1,500g</span><span class="count" id="count-mage">owned: 0</span></span>
+        </button>
+        <button id="btn-unit-knight" class="upgrade-btn" onclick="buyUnit('knight')" style="display:none">
+          <span class="btn-left"><span class="btn-name">⚔️ Knight</span><span class="btn-effect">+80 dmg / sec</span></span>
+          <span class="btn-right"><span class="btn-cost" id="cost-knight">🪙 8,000g</span><span class="count" id="count-knight">owned: 0</span></span>
+        </button>
+        <button id="btn-unit-archmage" class="upgrade-btn" onclick="buyUnit('archmage')" style="display:none">
+          <span class="btn-left"><span class="btn-name">🔮 Archmage</span><span class="btn-effect">+400 dmg / sec</span></span>
+          <span class="btn-right"><span class="btn-cost" id="cost-archmage">🪙 35,000g</span><span class="count" id="count-archmage">owned: 0</span></span>
+        </button>
+        <div class="shop-msg" id="shop-msg"></div>
+      </div>
     </div>
 
     <!-- Gear tab -->
@@ -826,17 +962,23 @@ box-shadow:
   let passiveDamage = 0;
   let currentFloor  = 1;
   let monsterDead   = false;
-  let weaponsBought = { sword: false, gloves: false, axe: false };
+  let weaponsBought = { sword: false, gloves: false, axe: false, bow: false, tome: false, stormstrike: false, shadowreaper: false };
 
   const weapons = {
-    sword:  { cost: 60,   bonus: 5  },
-    gloves: { cost: 300,  bonus: 10 },
-    axe:    { cost: 1000, bonus: 25 },
+    sword:       { cost: 60,     bonus: 5   },
+    gloves:      { cost: 300,    bonus: 10  },
+    axe:         { cost: 1000,   bonus: 25  },
+    bow:         { cost: 2500,   bonus: 20  },
+    tome:        { cost: 7500,   bonus: 35  },
+    stormstrike: { cost: 25000,  bonus: 80  },
+    shadowreaper:{ cost: 100000, bonus: 150 },
   };
   const units = {
-    squire: { baseCost: 200,  dps: 2,  count: 0 },
-    rogue:  { baseCost: 500,  dps: 5,  count: 0 },
-    mage:   { baseCost: 1500, dps: 15, count: 0 },
+    squire:   { baseCost: 200,   dps: 2,   count: 0 },
+    rogue:    { baseCost: 500,   dps: 5,   count: 0 },
+    mage:     { baseCost: 1500,  dps: 15,  count: 0 },
+    knight:   { baseCost: 8000,  dps: 80,  count: 0, minFloor: 15 },
+    archmage: { baseCost: 35000, dps: 400, count: 0, minFloor: 30 },
   };
 
   // ── Persistent state (survives ascend) ──
@@ -870,7 +1012,7 @@ box-shadow:
   }
 
   function totalUnits() {
-    return units.squire.count + units.rogue.count + units.mage.count;
+    return Object.values(units).reduce((sum, u) => sum + u.count, 0);
   }
 
   function recalcPassive() {
@@ -973,14 +1115,29 @@ box-shadow:
   }
 
   function updateWeaponButtons() {
-    ["sword","gloves","axe"].forEach(id => {
+    Object.keys(weapons).forEach(id => {
       const btn = document.getElementById("btn-" + id);
-      if (btn && weaponsBought[id]) {
+      if (!btn) return;
+      if (weaponsBought[id]) {
         btn.style.opacity = "0.45"; btn.style.cursor = "default";
         const cost = btn.querySelector(".btn-cost");
         if (cost) cost.textContent = "Purchased";
       }
     });
+    const b = weaponsBought;
+    const s = id => { const el = document.getElementById("btn-" + id); if (el) el.style.display = "flex"; };
+    const h = id => { const el = document.getElementById("btn-" + id); if (el) el.style.display = "none"; };
+    if (b.axe)         s("bow");         else h("bow");
+    if (b.bow)         s("tome");        else h("tome");
+    if (b.tome)        s("stormstrike"); else h("stormstrike");
+    if (b.stormstrike) s("shadowreaper");else h("shadowreaper");
+  }
+
+  function updateUnitVisibility() {
+    const knight   = document.getElementById("btn-unit-knight");
+    const archmage = document.getElementById("btn-unit-archmage");
+    if (knight)   knight.style.display   = currentFloor >= units.knight.minFloor   ? "flex" : "none";
+    if (archmage) archmage.style.display = currentFloor >= units.archmage.minFloor ? "flex" : "none";
   }
 
   function startAttackHold(event) {
@@ -988,8 +1145,8 @@ box-shadow:
     const pos = event.touches ? event.touches[0] : event;
     attack(pos);
     holdTimeout = setTimeout(() => {
-      holdInterval = setInterval(() => attack(null), 100);
-    }, 250);
+      holdInterval = setInterval(() => attack(null), 220);
+    }, 300);
   }
 
   function stopAttackHold() {
@@ -1046,9 +1203,10 @@ box-shadow:
   }
 
   function renderUnitCosts() {
-    document.getElementById("cost-squire").textContent = "🪙 " + formatNum(getUnitCost("squire")) + "g";
-    document.getElementById("cost-rogue").textContent  = "🪙 " + formatNum(getUnitCost("rogue"))  + "g";
-    document.getElementById("cost-mage").textContent   = "🪙 " + formatNum(getUnitCost("mage"))   + "g";
+    ["squire","rogue","mage","knight","archmage"].forEach(id => {
+      const el = document.getElementById("cost-" + id);
+      if (el) el.textContent = "🪙 " + formatNum(getUnitCost(id)) + "g";
+    });
   }
 
   function renderShardUpgrades() {
@@ -1177,10 +1335,21 @@ box-shadow:
 
   function showTab(tab) {
     ["shop","gear","heroes","shards","achievements"].forEach(t => {
-      document.getElementById("tab-" + t).style.display = t === tab ? "block" : "none";
+      const el = document.getElementById("tab-" + t);
+      if (t !== tab) { el.style.display = "none"; return; }
+      el.style.display = t === "shop" ? "flex" : "block";
     });
     document.querySelectorAll(".tab-btn").forEach((btn, i) => {
       btn.classList.toggle("active", i === ["shop","gear","heroes","shards","achievements"].indexOf(tab));
+    });
+  }
+
+  function showShopTab(sub) {
+    ["weapons","units"].forEach(s => {
+      document.getElementById("subtab-" + s).style.display = s === sub ? "block" : "none";
+    });
+    document.querySelectorAll(".sub-tab-btn").forEach((btn, i) => {
+      btn.classList.toggle("active", i === ["weapons","units"].indexOf(sub));
     });
   }
 
@@ -1231,11 +1400,57 @@ box-shadow:
     setTimeout(() => el.remove(), dur);
   }
 
+  let lastLungeTime = 0;
+  function triggerLunge() {
+    const now = Date.now();
+    if (now - lastLungeTime < 280) return;
+    lastLungeTime = now;
+    const el = document.getElementById("player-emoji");
+    if (!el) return;
+    el.classList.remove("lunging"); void el.offsetWidth; el.classList.add("lunging");
+  }
+
+  let lastRecoilTime = 0;
   function flashMonster() {
-    const el = document.getElementById("monster-emoji");
-    el.classList.remove("hit");
-    void el.offsetWidth;
-    el.classList.add("hit");
+    const emoji = document.getElementById("monster-emoji");
+    emoji.classList.remove("hit"); void emoji.offsetWidth; emoji.classList.add("hit");
+    const now = Date.now();
+    if (now - lastRecoilTime >= 260) {
+      lastRecoilTime = now;
+      const side = emoji.closest(".monster-side");
+      if (side) { side.classList.remove("recoil"); void side.offsetWidth; side.classList.add("recoil"); }
+    }
+  }
+
+  function spawnPassiveFloats() {
+    const emojiEl = document.getElementById("monster-emoji");
+    if (!emojiEl) return;
+    const rect = emojiEl.getBoundingClientRect();
+    const cx = rect.left + rect.width / 2;
+    const cy = rect.top  + rect.height / 2;
+    const effDPSMult = 1 + getTotalMult("dpsMult");
+    const contributors = [
+      { count: units.squire.count,   dps: units.squire.dps   },
+      { count: units.rogue.count,    dps: units.rogue.dps    },
+      { count: units.mage.count,     dps: units.mage.dps     },
+      { count: units.knight.count,   dps: units.knight.dps   },
+      { count: units.archmage.count, dps: units.archmage.dps },
+    ].filter(u => u.count > 0);
+    if (!contributors.length) return;
+    contributors.forEach((u, i) => {
+      const dmg    = Math.floor(u.count * u.dps * effDPSMult);
+      const side   = (i % 2 === 0) ? -1 : 1;
+      const offsetX = (Math.random() * 30 + 10) * side;
+      const offsetY = Math.random() * 20 - 10;
+      const el = document.createElement("div");
+      el.className = "dmg-float passive";
+      el.textContent = "-" + formatNum(dmg);
+      el.style.left = (cx + offsetX - 12) + "px";
+      el.style.top  = (cy + offsetY - 20) + "px";
+      el.style.setProperty("--dx", (offsetX * 0.8) + "px");
+      document.body.appendChild(el);
+      setTimeout(() => el.remove(), 1200);
+    });
   }
 
   function showKillMsg(amount, isBoss) {
@@ -1296,6 +1511,7 @@ box-shadow:
 
     updateHPBar();
     updateAscendSection();
+    updateUnitVisibility();
   }
 
   // ─────────────────────────────────────
@@ -1492,6 +1708,7 @@ box-shadow:
     if (monsterDead) return;
     initAudio();
     playClickSound();
+    triggerLunge();
 
     const gorak      = heroes.find(h => h.id === "gorak");
     const critChance = gorak && gorak.unlocked
@@ -1505,14 +1722,24 @@ box-shadow:
 
     if (isCrit) shakeScreen();
 
-    if (event) {
+    const spawnFloat = (x, y) => {
       const el = document.createElement("div");
-      el.className  = "dmg-float" + (isCrit ? " crit" : "");
+      el.className   = "dmg-float" + (isCrit ? " crit" : "");
       el.textContent = (isCrit ? "💥 " : "-") + formatNum(dmg);
-      el.style.left = (event.clientX - 16) + "px";
-      el.style.top  = (event.clientY - 30) + "px";
+      el.style.left  = (x - 16) + "px";
+      el.style.top   = (y - 30) + "px";
       document.body.appendChild(el);
       setTimeout(() => el.remove(), 900);
+    };
+
+    if (event && event.clientX != null) {
+      spawnFloat(event.clientX, event.clientY);
+    } else {
+      const emojiEl = document.getElementById("monster-emoji");
+      if (emojiEl) {
+        const r = emojiEl.getBoundingClientRect();
+        spawnFloat(r.left + r.width / 2 + (Math.random() * 40 - 20), r.top + r.height / 2 + (Math.random() * 20 - 10));
+      }
     }
 
     dealDamage(dmg);
@@ -1542,8 +1769,10 @@ box-shadow:
     recalcPassive();
     updateGold();
     renderStats();
-    document.getElementById("count-" + id).textContent = "owned: " + units[id].count;
+    const countEl = document.getElementById("count-" + id);
+    if (countEl) countEl.textContent = "owned: " + units[id].count;
     document.getElementById("shop-msg").textContent = "";
+    renderUnitCosts();
     playBuySound();
     checkAchievements();
   }
@@ -1593,7 +1822,7 @@ box-shadow:
     clickDamage   = 10;
     currentFloor  = 1;
     monsterDead   = false;
-    weaponsBought = { sword: false, gloves: false, axe: false };
+    weaponsBought = { sword: false, gloves: false, axe: false, bow: false, tome: false, stormstrike: false, shadowreaper: false };
     for (const k in units) units[k].count = 0;
     recalcPassive();
 
@@ -1603,7 +1832,7 @@ box-shadow:
 
     updateGold();
     renderStats();
-    for (const k in units) document.getElementById("count-" + k).textContent = "owned: 0";
+    for (const k in units) { const el = document.getElementById("count-" + k); if (el) el.textContent = "owned: 0"; }
     updateShardDisplay();
     renderShardUpgrades();
 
@@ -1683,7 +1912,7 @@ box-shadow:
     s.setItem("totalShardsEarned", totalShardsEarned);
     s.setItem("shardsSpent",       shardsSpent);
     s.setItem("muted",             muted ? "1" : "0");
-    s.setItem("unitCounts",        JSON.stringify({ squire: units.squire.count, rogue: units.rogue.count, mage: units.mage.count }));
+    s.setItem("unitCounts",        JSON.stringify(Object.fromEntries(Object.keys(units).map(k => [k, units[k].count]))));
     s.setItem("weaponsBought",     JSON.stringify(weaponsBought));
     s.setItem("shardUpgrades",     JSON.stringify(shardShop.map(u => u.owned)));
     s.setItem("achievements",      JSON.stringify(achievements.map(a => a.unlocked)));
@@ -1774,7 +2003,7 @@ box-shadow:
 
     updateGold();
     renderStats();
-    for (const k in units) document.getElementById("count-" + k).textContent = "owned: " + units[k].count;
+    for (const k in units) { const el = document.getElementById("count-" + k); if (el) el.textContent = "owned: " + units[k].count; }
     updateShardDisplay();
     renderShardUpgrades();
     renderUnitCosts();
@@ -1785,6 +2014,7 @@ box-shadow:
     checkHeroUnlocks();
     updatePrestigeBadge();
     updateWeaponButtons();
+    updateUnitVisibility();
   }
 
   // ─────────────────────────────────────
@@ -1795,7 +2025,7 @@ box-shadow:
     if (passiveDamage > 0) {
       const eff = Math.floor(passiveDamage * (1 + getTotalMult("dpsMult")));
       if (monsterDead) { damageBuffer += eff; }
-      else { dealDamage(eff); }
+      else { spawnPassiveFloats(); dealDamage(eff); }
     }
   }, 1000);
 
