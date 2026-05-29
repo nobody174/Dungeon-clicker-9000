@@ -14,7 +14,6 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-
   # ── Job 1: Run tests ─────────────────────────────────────────
   test:
     name: 🧪 Run Tests
@@ -24,8 +23,8 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: '20'
-          cache: 'npm'
+          node-version: "20"
+          cache: "npm"
 
       - name: Install dependencies
         run: npm ci
@@ -61,8 +60,38 @@ jobs:
       - name: Upload site
         uses: actions/upload-pages-artifact@v3
         with:
-          path: '.'
+          path: "."
 
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
+
+  # ── Job 3: Deploy to itch.io ─────────────────────────────────
+  deploy-itch:
+    name: 🎮 Deploy to itch.io
+    needs: test
+    runs-on: ubuntu-latest
+
+    if: github.ref == 'refs/heads/main'
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Node dependencies
+        run: npm ci
+
+      - name: Build game
+        run: npm run build || echo "No build step found"
+
+      - name: Install Butler
+        run: |
+          curl -L -o butler.zip https://broth.itch.zone/butler/linux-amd64/LATEST/archive/default
+          unzip butler.zip
+          chmod +x butler
+          sudo mv butler /usr/local/bin/
+
+      - name: Push to itch.io
+        env:
+          BUTLER_API_KEY: ${{ secrets.BUTLER_API_KEY }}
+        run: |
+          butler push . ${{ secrets.ITCH_USER }}/${{ secrets.ITCH_GAME }}:html
