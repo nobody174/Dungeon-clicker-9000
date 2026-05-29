@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Delve</title>
+  <title>Dungeon Clicker 9000</title>
   <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700&family=MedievalSharp&display=swap" rel="stylesheet">
   <style>
     * { box-sizing: border-box; }
@@ -22,7 +22,7 @@
 
     h1 {
       font-family: 'Cinzel Decorative', 'MedievalSharp', Georgia, serif;
-      font-size: 5rem;
+      font-size: 3rem;
       font-weight: 700;
       color: #c9a84c;
       margin: 0 0 1.2rem;
@@ -628,12 +628,17 @@
   .gold-display {
     justify-content: center;
   }
+
+  h1 {
+    font-size: 1.6rem;
+    letter-spacing: 1px;
+  }
 }
   </style>
 </head>
 <body>
 
-<h1>Delve</h1>
+<h1>Dungeon Clicker 9000</h1>
 
 <div id="offline-banner" class="offline-banner" style="display:none">
   <span id="offline-text"></span>
@@ -732,6 +737,10 @@
         <button id="btn-shadowreaper" class="upgrade-btn" onclick="buyUpgrade('shadowreaper')" style="display:none">
           <span class="btn-left"><span class="btn-name">🌑 Shadowreaper</span><span class="btn-effect">+150 click damage</span></span>
           <span class="btn-right"><span class="btn-cost">🪙 100,000g</span></span>
+        </button>
+        <button id="btn-deathscythe" class="upgrade-btn" onclick="buyUpgrade('deathscythe')" style="display:none">
+          <span class="btn-left"><span class="btn-name">💀 Deathscythe</span><span class="btn-effect">+300 click damage</span></span>
+          <span class="btn-right"><span class="btn-cost">🪙 500,000g</span></span>
         </button>
       </div>
 
@@ -962,7 +971,7 @@
   let passiveDamage = 0;
   let currentFloor  = 1;
   let monsterDead   = false;
-  let weaponsBought = { sword: false, gloves: false, axe: false, bow: false, tome: false, stormstrike: false, shadowreaper: false };
+  let weaponsBought = { sword: false, gloves: false, axe: false, bow: false, tome: false, stormstrike: false, shadowreaper: false, deathscythe:false };
 
   const weapons = {
     sword:       { cost: 60,     bonus: 5   },
@@ -972,6 +981,7 @@
     tome:        { cost: 7500,   bonus: 35  },
     stormstrike: { cost: 25000,  bonus: 80  },
     shadowreaper:{ cost: 100000, bonus: 150 },
+    deathscythe:{ cost: 500000, bonus: 300 },
   };
   const units = {
     squire:   { baseCost: 200,   dps: 2,   count: 0 },
@@ -1134,6 +1144,7 @@
     if (b.bow)         s("tome");        else h("tome");
     if (b.tome)        s("stormstrike"); else h("stormstrike");
     if (b.stormstrike) s("shadowreaper");else h("shadowreaper");
+    if (b.shadowreaper) s("deathscythe"); else h("deathscythe");
   }
 
   function updateUnitVisibility() {
@@ -1825,7 +1836,7 @@
     clickDamage   = 10;
     currentFloor  = 1;
     monsterDead   = false;
-    weaponsBought = { sword: false, gloves: false, axe: false, bow: false, tome: false, stormstrike: false, shadowreaper: false };
+    weaponsBought = { sword: false, gloves: false, axe: false, bow: false, tome: false, stormstrike: false, shadowreaper: false, deathscythe: false };
     for (const k in units) units[k].count = 0;
     recalcPassive();
 
