@@ -1,6 +1,6 @@
 const { test, expect } = require('@playwright/test');
 
-test.describe('Delve — Core Game', () => {
+test.describe('Dungeon Clicker 9000 — Core Game', () => {
 
   test.beforeEach(async ({ page }) => {
     await page.goto('/');
@@ -10,8 +10,8 @@ test.describe('Delve — Core Game', () => {
   });
 
   // ── Page loads ──────────────────────────────────────────────
-  test('page title is Delve', async ({ page }) => {
-    await expect(page).toHaveTitle('Delve');
+  test('page title is Dungeon Clicker 9000', async ({ page }) => {
+    await expect(page).toHaveTitle('Dungeon Clicker 9000');
   });
 
   // ── Starting state ───────────────────────────────────────────
