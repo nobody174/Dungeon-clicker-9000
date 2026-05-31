@@ -382,3 +382,7 @@
       };
       r.readAsText(file);
     })
+  }
+
+  waitForGame();
+})();
