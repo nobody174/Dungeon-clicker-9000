@@ -85,3 +85,7 @@ Copyright © 2025 nobody174 — All rights reserved.
 ---
 
 *"It's never too late to give up!"*
+
+---
+
+*Built with assistance from [Claude Code](https://claude.ai/code) by Anthropic.*
