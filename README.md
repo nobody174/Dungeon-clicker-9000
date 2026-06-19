@@ -80,6 +80,7 @@ dungeon-clicker-9000/
 ## 👤 Author
 
 Built by [nobody174](https://github.com/nobody174).  
+**Support:** [Patreon](https://www.patreon.com/Nobody174/posts/dungeon-clicker-159797306)  
 Copyright © 2025 nobody174 — All rights reserved.
 
 ---
