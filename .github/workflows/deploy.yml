@@ -1,7 +1,7 @@
 name: CI/CD — Test & Deploy
 
 on:
-  push:
+  workflow_dispatch:
     branches: [main]
 
 permissions:
@@ -94,4 +94,3 @@ jobs:
         env:
           BUTLER_API_KEY: ${{ secrets.BUTLER_API_KEY }}
         run: |
-          butler push . ${{ secrets.ITCH_USER }}/${{ secrets.ITCH_GAME }}:html
