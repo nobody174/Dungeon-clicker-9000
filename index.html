@@ -191,6 +191,7 @@
     .reset-btn { padding:0.5rem 1.2rem; background:#1a0808; color:#804040; border:1px solid #401010; border-radius:5px; cursor:pointer; font-family:Georgia,serif; font-size:0.8rem; }
     .reset-btn:hover { color:#cc6060; border-color:#803030; }
 
+
     /* ── Monster ── */
     .monster-area {
       display: flex; flex-direction: column; align-items: center; margin-bottom: 0.7rem;
@@ -199,6 +200,8 @@
       font-size: 6rem; line-height: 1; display: inline-block; margin-bottom: 0.4rem;
     }
     .monster-emoji.boss-monster { filter: drop-shadow(0 0 16px #ffd700); }
+    .monster-emoji.mega-boss-monster { filter: drop-shadow(0 0 26px #ff8800); font-size: 7.5rem; }
+    .boss-badge.mega-badge { color: #ff9933; border-color: #a05a10; background: rgba(255,136,0,0.15); }
 
     @keyframes hit-flash {
       0%   { filter: drop-shadow(0 0 16px #ff2222); transform: scale(1.13); }
@@ -242,6 +245,8 @@
 
   margin-bottom: 0.4rem;
 
+  position: relative;
+
   box-shadow:
     inset 0 0 8px rgba(0,0,0,0.8);
 }
@@ -251,7 +256,39 @@
       border-radius: 7px; transition: width 0.14s ease-out;
     }
     .hp-bar-fill.boss-hp { background: linear-gradient(90deg, #b71c1c, #ef5350); }
-    .hp-text { font-size: 0.8rem; color: #334; letter-spacing: 1px; }
+    .hp-text { font-size: 0.8rem; color: #9a9ab0; letter-spacing: 1px; }
+
+    /* ── Boss shield + phases ── */
+    /* Shield renders as a glowing frame around the existing HP bar (no extra layout height,
+       so the attack button never shifts) plus a thin cyan strip that depletes left-to-right
+       on top of the HP fill. */
+    .hp-bar-wrap.shield-active {
+      border-color: #4fc3f7;
+      box-shadow: inset 0 0 8px rgba(0,0,0,0.8), 0 0 10px rgba(79,195,247,0.55);
+    }
+    .shield-frame-fill {
+      position: absolute; top: 0; left: 0; height: 100%; width: 0%;
+      background: rgba(79,195,247,0.55);
+      z-index: 2; transition: width 0.14s ease-out;
+      display: none;
+    }
+    .hp-bar-wrap.shield-active .shield-frame-fill { display: block; }
+    .shield-text { color: #4fc3f7; font-size: 0.72rem; margin-top: -0.1rem; }
+    @keyframes shield-break-flash {
+      0%   { box-shadow: inset 0 0 8px rgba(0,0,0,0.8), 0 0 0 rgba(79,195,247,0); }
+      30%  { box-shadow: inset 0 0 8px rgba(0,0,0,0.8), 0 0 24px rgba(79,195,247,0.95); }
+      100% { box-shadow: inset 0 0 8px rgba(0,0,0,0.8), 0 0 0 rgba(79,195,247,0); }
+    }
+    .hp-bar-wrap.breaking { animation: shield-break-flash 0.5s ease-out; }
+    .phase-pips { display: flex; gap: 5px; margin-top: 0.3rem; }
+    .phase-pip { width: 10px; height: 10px; border-radius: 50%; background: #2a1010; border: 1px solid #6e3030; }
+    .phase-pip.pip-active { background: #ff4444; border-color: #ff8888; box-shadow: 0 0 6px rgba(255,68,68,0.6); }
+    .phase-pip.pip-done { background: #553030; border-color: #6e3030; }
+    @keyframes phase-shift-pulse {
+      0%,100% { filter: drop-shadow(0 0 16px #ffd700); }
+      50%      { filter: drop-shadow(0 0 36px #fff) brightness(1.4); }
+    }
+    .monster-emoji.phase-shifting { animation: phase-shift-pulse 0.5s ease-in-out 3; }
 
     /* ── Kill message ── */
     .kill-msg { font-size: 0.86rem; color: #c9a84c; height: 1.4rem; text-align: center; margin-bottom: 0.1rem; }
@@ -303,8 +340,8 @@
 
   font-variant-numeric: tabular-nums;
 }
-    .stats { font-size: 0.8rem; color: #334; margin-top: 0.5rem; line-height: 2; text-align: center; }
-    .stats span.hl { color: #667; }
+    .stats { font-size: 0.8rem; color: #9a9ab0; margin-top: 0.5rem; line-height: 2; text-align: center; }
+    .stats span.hl { color: #c9c9e0; }
 
     /* ── Shop upgrade buttons ── */
     .upgrade-btn {
@@ -318,11 +355,30 @@
     .upgrade-btn:active { background: #252545; }
     .btn-left { display: flex; flex-direction: column; align-items: flex-start; gap: 0.08rem; }
     .btn-name { font-size: 0.9rem; color: #d0d0d0; }
-    .btn-effect { font-size: 0.73rem; color: #334; }
+    .btn-effect { font-size: 0.73rem; color: #8fd49a; }
     .btn-right { display: flex; flex-direction: column; align-items: flex-end; gap: 0.13rem; }
     .btn-cost { font-size: 0.86rem; color: #c9a84c; white-space: nowrap; }
-    .count { font-size: 0.7rem; color: #2a2a4a; white-space: nowrap; }
+    .count { font-size: 0.7rem; color: #8888a8; white-space: nowrap; }
     .shop-msg { font-size: 0.82rem; color: #c0392b; min-height: 1rem; margin-top: 0.4rem; text-align: center; }
+
+    /* ── Unit cards (buy button + nested mastery row, visually grouped so mastery doesn't read as a separate unit) ── */
+    .unit-card {
+      border: 1px solid #2a2a52; border-radius: 8px; margin-bottom: 0.42rem; overflow: hidden;
+    }
+    .unit-card .unit-buy-btn {
+      margin-bottom: 0; border: none; border-radius: 8px 8px 0 0;
+    }
+    .unit-card .unit-buy-btn:only-child { border-radius: 8px; }
+    .mastery-row {
+      display: flex; justify-content: space-between; align-items: center;
+      width: 100%; padding: 0.4rem 0.85rem 0.45rem 1.6rem;
+      background: #0c0c1c; color: #c9b870; border: none; border-top: 1px dashed #2a2a45;
+      cursor: pointer; font-family: Georgia, serif; font-size: 0.74rem;
+      transition: background 0.14s;
+    }
+    .mastery-row:hover { background: #15152a; }
+    .mastery-pct { color: #5c8; font-size: 0.7rem; }
+    .mastery-cost { color: #9d8a4a; white-space: nowrap; }
 
     /* ── Shard / prestige panel ── */
     .shard-info {
@@ -345,7 +401,7 @@
     .shard-msg { font-size: 0.82rem; color: #c0392b; min-height: 1rem; margin-top: 0.4rem; text-align: center; }
 
     .ascend-zone { margin-top: 1.4rem; padding-top: 1rem; border-top: 1px solid #1e1e3e; text-align: center; }
-    .ascend-info { font-size: 0.82rem; color: #334; margin-bottom: 0.7rem; line-height: 1.5; }
+    .ascend-info { font-size: 0.82rem; color: #9a9ab0; margin-bottom: 0.7rem; line-height: 1.5; }
     .ascend-btn {
       display: none; width: 100%; padding: 0.8rem;
       background: linear-gradient(135deg, #2d0060, #6000a0);
@@ -367,11 +423,18 @@
       padding: 0.45rem 0.6rem; margin-bottom: 0.3rem; border-radius: 6px; font-size: 0.8rem;
     }
     .achievement.unlocked { background: #1a1a30; border: 1px solid #2a2a50; }
-    .achievement.locked   { background: #0f0f1a; border: 1px solid #16161e; opacity: 0.4; }
+    .achievement.locked   { background: #0f0f1a; border: 1px solid #16161e; }
+    .achievement.locked .ach-icon, .achievement.locked .ach-name { opacity: 0.4; }
     .ach-icon { font-size: 0.95rem; flex-shrink: 0; margin-top: 1px; }
     .ach-info { display: flex; flex-direction: column; gap: 0.08rem; }
     .ach-name { color: #c9a84c; font-size: 0.83rem; }
-    .ach-desc { color: #334; }
+    .ach-desc { color: #9a9ab0; }
+    .achievement.locked .ach-desc { color: #8fd49a; }
+    .ach-reward { font-size: 0.74rem; color: #c9a84c; white-space: nowrap; margin-left: auto; align-self: center; }
+    .achievement-power {
+      font-size: 0.76rem; color: #ffd36b; text-align: center; padding: 0.5rem 0.7rem;
+      margin-bottom: 0.6rem; background: rgba(201,168,76,0.08); border: 1px solid #5d4720; border-radius: 6px;
+    }
 
     /* ── Rarity colours ── */
     .rarity-common    { color: #aaaaaa; }
@@ -386,11 +449,24 @@
     }
     .equip-slot-icon { font-size: 1.8rem; flex-shrink: 0; line-height: 1.2; }
     .equip-slot-info { flex: 1; }
-    .equip-slot-label { font-size: 0.68rem; color: #334; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 0.18rem; }
+    .equip-slot-label { font-size: 0.68rem; color: #8888a8; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 0.18rem; }
     .equip-slot-name  { font-size: 0.92rem; margin-bottom: 0.12rem; }
-    .equip-slot-flavor{ font-size: 0.72rem; color: #445; font-style: italic; margin-bottom: 0.12rem; }
+    .equip-slot-flavor{ font-size: 0.72rem; color: #9a96b0; font-style: italic; margin-bottom: 0.12rem; }
     .equip-slot-bonus { font-size: 0.75rem; color: #5c8; }
-    .equip-slot-empty { font-size: 0.82rem; color: #2a2a4a; }
+    .equip-slot-empty { font-size: 0.82rem; color: #6a6a85; }
+
+    /* ── Potions / active buffs ── */
+    .active-buffs-list { margin-bottom: 0.9rem; }
+    .active-buff {
+      display: flex; align-items: center; gap: 0.65rem;
+      padding: 0.5rem 0.7rem; margin-bottom: 0.35rem;
+      background: #14122a; border: 1px solid #3a2a6a; border-radius: 8px;
+    }
+    .active-buff-icon { font-size: 1.4rem; flex-shrink: 0; }
+    .active-buff-info { flex: 1; min-width: 0; }
+    .active-buff-name { font-size: 0.85rem; color: #cc99ff; }
+    .active-buff-effect { font-size: 0.7rem; color: #5c8; }
+    .active-buff-timer { font-size: 0.82rem; color: #9090ff; font-variant-numeric: tabular-nums; flex-shrink: 0; }
 
     /* ── Hero cards ── */
     .hero-card {
@@ -407,12 +483,13 @@
     .hero-card-header { display: flex; align-items: center; gap: 0.6rem; margin-bottom: 0.3rem; }
     .hero-icon  { font-size: 1.6rem; line-height: 1; }
     .hero-name  { font-size: 0.95rem; color: #d0d0d0; }
-    .hero-class { font-size: 0.68rem; color: #446; letter-spacing: 2px; text-transform: uppercase; }
-    .hero-flavor     { font-size: 0.72rem; color: #445; font-style: italic; margin-bottom: 0.3rem; }
+    .hero-class { font-size: 0.68rem; color: #9a96b8; letter-spacing: 2px; text-transform: uppercase; }
+    .hero-flavor     { font-size: 0.72rem; color: #a8a4c0; font-style: italic; margin-bottom: 0.3rem; }
     .hero-bonus      { font-size: 0.75rem; color: #5c8; margin-bottom: 0.3rem; }
-    .hero-lock-cond  { font-size: 0.75rem; color: #446; margin-top: 0.2rem; }
+    .hero-synergy    { font-size: 0.72rem; color: #9090ff; margin-bottom: 0.3rem; font-style: italic; }
+    .hero-lock-cond  { font-size: 0.75rem; color: #8888a8; margin-top: 0.2rem; }
     .hero-footer     { display: flex; align-items: center; justify-content: space-between; margin-top: 0.35rem; }
-    .hero-level      { font-size: 0.78rem; color: #556; }
+    .hero-level      { font-size: 0.78rem; color: #9a9ab8; }
     .hero-level-btn  {
       padding: 0.3rem 0.7rem;
       background: #1a1a30; color: #c9a84c;
@@ -437,7 +514,7 @@
     .modal-title { font-size: 1.8rem; color: #cc99ff; margin-bottom: 1rem; letter-spacing: 2px; }
     .modal-body  { font-size: 0.93rem; color: #888; margin: 0.45rem 0; line-height: 1.5; }
     .modal-body strong { color: #ddd; }
-    .modal-small { font-size: 0.78rem; color: #334; margin-top: 0.8rem; }
+    .modal-small { font-size: 0.78rem; color: #9a9ab0; margin-top: 0.8rem; }
     .modal-btns { display: flex; gap: 1rem; margin-top: 1.4rem; justify-content: center; }
     .modal-confirm {
       padding: 0.65rem 1.4rem; background: linear-gradient(135deg,#3a0070,#7000b0);
@@ -446,7 +523,7 @@
     }
     .modal-confirm:hover { filter: brightness(1.2); }
     .modal-cancel {
-      padding: 0.65rem 1.4rem; background: #1a1a30; color: #556;
+      padding: 0.65rem 1.4rem; background: #1a1a30; color: #a0a0b8;
       border: 1px solid #2a2a40; border-radius: 8px;
       cursor: pointer; font-family: Georgia, serif; font-size: 0.95rem;
     }
@@ -461,24 +538,24 @@
     .loot-title      { font-size: 1.1rem; color: #c9a84c; margin-bottom: 0.2rem; letter-spacing: 2px; }
     .loot-item-icon  { font-size: 3.2rem; margin: 0.4rem 0; line-height: 1; }
     .loot-item-name  { font-size: 1.1rem; margin-bottom: 0.15rem; }
-    .loot-item-slot  { font-size: 0.68rem; color: #446; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 0.35rem; }
-    .loot-item-flavor{ font-size: 0.78rem; color: #556; font-style: italic; margin-bottom: 0.4rem; line-height: 1.4; }
+    .loot-item-slot  { font-size: 0.68rem; color: #8888a8; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 0.35rem; }
+    .loot-item-flavor{ font-size: 0.78rem; color: #a8a4c0; font-style: italic; margin-bottom: 0.4rem; line-height: 1.4; }
     .loot-item-bonus { font-size: 0.85rem; color: #5c8; margin-bottom: 0.5rem; }
     .loot-compare {
       border-top: 1px solid #2a2a42; padding-top: 0.55rem; margin-bottom: 0.65rem; text-align: left;
     }
-    .loot-compare-label { font-size: 0.65rem; color: #334; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 0.3rem; text-align: center; }
+    .loot-compare-label { font-size: 0.65rem; color: #9a9ab0; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 0.3rem; text-align: center; }
     .loot-compare-row   { display: flex; align-items: center; gap: 0.5rem; padding: 0.35rem 0.5rem; border-radius: 6px; margin-bottom: 0.18rem; }
     .loot-compare-row.new-item  { background: #0d1f10; border: 1px solid #1e4020; }
     .loot-compare-row.cur-item  { background: #1a1424; border: 1px solid #2a1e38; }
     .loot-compare-tag { font-size: 0.62rem; letter-spacing: 1px; text-transform: uppercase; flex-shrink: 0; width: 2.8rem; }
     .loot-compare-tag.tag-new { color: #5c8; }
-    .loot-compare-tag.tag-cur { color: #557; }
+    .loot-compare-tag.tag-cur { color: #9a96b8; }
     .loot-compare-info { flex: 1; }
     .loot-compare-name  { font-size: 0.82rem; }
     .loot-compare-bonus { font-size: 0.72rem; color: #5c8; }
-    .loot-compare-bonus.cur-bonus { color: #556; }
-    .loot-empty-slot { font-size: 0.75rem; color: #334; text-align: center; margin-bottom: 0.65rem; }
+    .loot-compare-bonus.cur-bonus { color: #9a9ab0; }
+    .loot-empty-slot { font-size: 0.75rem; color: #9a9ab0; text-align: center; margin-bottom: 0.65rem; }
     .loot-modal .modal-confirm { background: linear-gradient(135deg,#5a3a00,#a07000); color: #ffd700; border-color: #a07000; }
 
     /* ── Toast ── */
@@ -495,7 +572,7 @@
     }
     .toast.out { animation: toast-out 0.4s ease-out forwards; }
     .toast-title { font-size: 0.86rem; color: #c9a84c; margin-bottom: 0.12rem; }
-    .toast-desc  { font-size: 0.74rem; color: #556; }
+    .toast-desc  { font-size: 0.74rem; color: #b0aec8; }
 
     /* ── Floating damage numbers ── */
     @keyframes float-dmg {
@@ -679,8 +756,13 @@
         </div>
       </div>
       <div class="arena-hp-wrap">
-        <div class="hp-bar-wrap"><div class="hp-bar-fill" id="hp-fill"></div></div>
+        <div class="hp-bar-wrap" id="shield-bar-wrap">
+          <div class="shield-frame-fill" id="shield-fill"></div>
+          <div class="hp-bar-fill" id="hp-fill"></div>
+        </div>
         <div class="hp-text" id="hp-text">HP: 40 / 40</div>
+        <div class="shield-text hidden" id="shield-text">🛡 0 / 0</div>
+        <div class="phase-pips" id="phase-pips"></div>
       </div>
     </div>
 
@@ -696,6 +778,7 @@
     <div class="stats">
       <div>Click: <span class="hl" id="stat-click">10 dmg</span></div>
       <div>DPS: <span class="hl" id="stat-dps">0 / sec</span></div>
+      <div id="stat-speed-row" class="hidden">Attack Speed: <span class="hl" id="stat-speed">+0%</span></div>
     </div>
   </div>
 
@@ -705,8 +788,9 @@
       <button class="tab-btn active" onclick="showTab('shop')">🛒 Shop</button>
       <button class="tab-btn" onclick="showTab('gear')">⚔️ Gear</button>
       <button class="tab-btn" onclick="showTab('heroes')">🧙 Heroes</button>
+      <button class="tab-btn" onclick="showTab('potions')">🧪 Potions <span id="potion-dot" class="tab-dot" style="display:none">●</span></button>
       <button class="tab-btn" onclick="showTab('shards')">⚡ Prestige <span id="ascend-dot" class="tab-dot" style="display:none">●</span></button>
-      <button class="tab-btn" onclick="showTab('achievements')">🏆 <span id="ach-count">0</span>/45</button>
+      <button class="tab-btn" onclick="showTab('achievements')">🏆 <span id="ach-count">0</span>/<span id="ach-total">0</span></button>
     </div>
 
     <!-- Shop tab -->
@@ -717,61 +801,12 @@
       </div>
 
       <div id="subtab-weapons" class="sub-tab-content">
-        <button id="btn-sword" class="upgrade-btn" onclick="buyUpgrade('sword')">
-          <span class="btn-left"><span class="btn-name">🗡️ Better Sword</span><span class="btn-effect">+5 click damage</span></span>
-          <span class="btn-right"><span class="btn-cost">🪙 60g</span></span>
-        </button>
-        <button id="btn-gloves" class="upgrade-btn" onclick="buyUpgrade('gloves')">
-          <span class="btn-left"><span class="btn-name">🧤 Iron Gloves</span><span class="btn-effect">+10 click damage</span></span>
-          <span class="btn-right"><span class="btn-cost">🪙 300g</span></span>
-        </button>
-        <button id="btn-axe" class="upgrade-btn" onclick="buyUpgrade('axe')">
-          <span class="btn-left"><span class="btn-name">🪓 Battle Axe</span><span class="btn-effect">+25 click damage</span></span>
-          <span class="btn-right"><span class="btn-cost">🪙 1,000g</span></span>
-        </button>
-        <button id="btn-bow" class="upgrade-btn" onclick="buyUpgrade('bow')" style="display:none">
-          <span class="btn-left"><span class="btn-name">🏹 Elven Bow</span><span class="btn-effect">+20 click damage</span></span>
-          <span class="btn-right"><span class="btn-cost">🪙 2,500g</span></span>
-        </button>
-        <button id="btn-tome" class="upgrade-btn" onclick="buyUpgrade('tome')" style="display:none">
-          <span class="btn-left"><span class="btn-name">🔮 Spell Tome</span><span class="btn-effect">+35 click damage</span></span>
-          <span class="btn-right"><span class="btn-cost">🪙 7,500g</span></span>
-        </button>
-        <button id="btn-stormstrike" class="upgrade-btn" onclick="buyUpgrade('stormstrike')" style="display:none">
-          <span class="btn-left"><span class="btn-name">⚡ Stormstrike</span><span class="btn-effect">+80 click damage</span></span>
-          <span class="btn-right"><span class="btn-cost">🪙 25,000g</span></span>
-        </button>
-        <button id="btn-shadowreaper" class="upgrade-btn" onclick="buyUpgrade('shadowreaper')" style="display:none">
-          <span class="btn-left"><span class="btn-name">🌑 Shadowreaper</span><span class="btn-effect">+150 click damage</span></span>
-          <span class="btn-right"><span class="btn-cost">🪙 100,000g</span></span>
-        </button>
-        <button id="btn-deathscythe" class="upgrade-btn" onclick="buyUpgrade('deathscythe')" style="display:none">
-          <span class="btn-left"><span class="btn-name">💀 Deathscythe</span><span class="btn-effect">+300 click damage</span></span>
-          <span class="btn-right"><span class="btn-cost">🪙 500,000g</span></span>
-        </button>
+        <div id="weapon-path-choice"></div>
+        <div id="weapon-path-list"></div>
       </div>
 
       <div id="subtab-units" class="sub-tab-content" style="display:none">
-        <button class="upgrade-btn" onclick="buyUnit('squire')">
-          <span class="btn-left"><span class="btn-name">🛡️ Squire</span><span class="btn-effect">+2 dmg / sec</span></span>
-          <span class="btn-right"><span class="btn-cost" id="cost-squire">🪙 200g</span><span class="count" id="count-squire">owned: 0</span></span>
-        </button>
-        <button class="upgrade-btn" onclick="buyUnit('rogue')">
-          <span class="btn-left"><span class="btn-name">🗡️ Rogue</span><span class="btn-effect">+5 dmg / sec</span></span>
-          <span class="btn-right"><span class="btn-cost" id="cost-rogue">🪙 500g</span><span class="count" id="count-rogue">owned: 0</span></span>
-        </button>
-        <button class="upgrade-btn" onclick="buyUnit('mage')">
-          <span class="btn-left"><span class="btn-name">🧙 Mage</span><span class="btn-effect">+15 dmg / sec</span></span>
-          <span class="btn-right"><span class="btn-cost" id="cost-mage">🪙 1,500g</span><span class="count" id="count-mage">owned: 0</span></span>
-        </button>
-        <button id="btn-unit-knight" class="upgrade-btn" onclick="buyUnit('knight')" style="display:none">
-          <span class="btn-left"><span class="btn-name">⚔️ Knight</span><span class="btn-effect">+80 dmg / sec</span></span>
-          <span class="btn-right"><span class="btn-cost" id="cost-knight">🪙 8,000g</span><span class="count" id="count-knight">owned: 0</span></span>
-        </button>
-        <button id="btn-unit-archmage" class="upgrade-btn" onclick="buyUnit('archmage')" style="display:none">
-          <span class="btn-left"><span class="btn-name">🔮 Archmage</span><span class="btn-effect">+400 dmg / sec</span></span>
-          <span class="btn-right"><span class="btn-cost" id="cost-archmage">🪙 35,000g</span><span class="count" id="count-archmage">owned: 0</span></span>
-        </button>
+        <div id="unit-list"></div>
         <div class="shop-msg" id="shop-msg"></div>
       </div>
     </div>
@@ -780,13 +815,22 @@
     <div id="tab-gear" class="tab-content" style="display:none">
       <h2>🗡️ Equipped Gear</h2>
       <div id="tab-gear-content"></div>
-      <p style="font-size:0.75rem;color:#334;margin-top:0.6rem;text-align:center">Bosses drop loot. Better floors → rarer items.</p>
+      <p style="font-size:0.75rem;color:#9a9ab0;margin-top:0.6rem;text-align:center">Bosses drop loot. Better floors → rarer items.</p>
     </div>
 
     <!-- Heroes tab -->
     <div id="tab-heroes" class="tab-content" style="display:none">
       <h2>🧙 Companions</h2>
       <div id="tab-heroes-content"></div>
+    </div>
+
+    <!-- Potions tab -->
+    <div id="tab-potions" class="tab-content" style="display:none">
+      <h2>🧪 Active Effects</h2>
+      <div id="active-buffs-list" class="active-buffs-list"></div>
+      <h2>🧪 Potion Shop</h2>
+      <div id="potion-shop-list"></div>
+      <p style="font-size:0.75rem;color:#9a9ab0;margin-top:0.6rem;text-align:center">Potions stack their duration, not their effect. Drink wisely.</p>
     </div>
 
     <!-- Prestige tab -->
@@ -806,6 +850,7 @@
 
     <!-- Achievements tab -->
     <div id="tab-achievements" class="tab-content" style="display:none">
+      <div id="achievement-power" class="achievement-power"></div>
       <div id="achievements-list" class="achievements-list"></div>
       <div style="margin-top:1.2rem;text-align:center;border-top:1px solid #1e1e3e;padding-top:0.8rem">
         <button class="reset-btn" onclick="resetGame()">🗑️ Reset Save</button>
@@ -904,9 +949,45 @@
       flavor:"Strikes from darkness. Death follows.",
       unlockCondition:{ type:"bosses",  value:10,    desc:"Defeat 10 bosses" },
       bonus:{ clickMult:0.30 },     levelBonus:{ clickMult:0.06 },    unlocked:false, level:0 },
+    // ── Synergy tier: bonuses scale with the rest of the roster, not just their own level ──
+    { id:"aldric",    name:"Brother Aldric", title:"the Paladin", icon:"⚜️", heroClass:"Paladin",
+      flavor:"His war-hymn quickens every blade in the party.",
+      unlockCondition:{ type:"heroLevels", value:15, desc:"Reach 15 combined hero levels" },
+      bonus:{ attackSpeedMult:0.08 }, levelBonus:{ attackSpeedMult:0.025 },
+      perRosterMult:{ attackSpeedMult:0.05 },
+      synergyDesc:"+5% attack speed (held-click rate) per other hero unlocked",
+      unlocked:false, level:0 },
+    { id:"mortis",    name:"Mortis",    title:"the Necromancer", icon:"💀", heroClass:"Necromancer",
+      flavor:"He grows stronger feeding on the strength of others.",
+      unlockCondition:{ type:"bosses", value:25, desc:"Defeat 25 bosses" },
+      bonus:{ clickMult:0.05 }, levelBonus:{ clickMult:0.01 },
+      perHeroLevelMult:{ dpsMult:0.008 },
+      synergyDesc:"+0.8% DPS per level invested in OTHER heroes",
+      unlocked:false, level:0 },
+    { id:"lutessa",   name:"Lutessa",   title:"the Bard", icon:"🎻", heroClass:"Bard",
+      flavor:"Every legend in the party becomes part of her song.",
+      unlockCondition:{ type:"floor", value:40, desc:"Reach floor 40" },
+      bonus:{ goldMult:0.05 }, levelBonus:{ goldMult:0.015 },
+      perRosterMult:{ unitDiscount:0.02 },
+      synergyDesc:"+2% unit discount per other hero unlocked",
+      unlocked:false, level:0 },
   ];
 
   // ── Shard shop (persistent upgrades) ──
+  // ── Potions (consumable timed buffs) ──
+  // effect keys map onto getTotalMult() keys, except "autoClick" which is handled in the tick loop.
+  const potionDefs = [
+    { id:"goldRush",    name:"Gold Rush Elixir",  icon:"🍯", flavor:"The air smells like coin.",          effect:{ goldMult:0.50 },              duration:60,  baseCost:150,  costScale:1.6 },
+    { id:"berserkBrew", name:"Berserker's Brew",  icon:"🍺", flavor:"Pain is just weakness leaving.",      effect:{ clickMult:0.75 },             duration:45,  baseCost:200,  costScale:1.6 },
+    { id:"swiftTonic",  name:"Swiftness Tonic",   icon:"🧪", flavor:"Time feels thinner.",                 effect:{ dpsMult:0.60 },                duration:60,  baseCost:180,  costScale:1.6 },
+    { id:"luckyDraught",name:"Lucky Draught",     icon:"🍀", flavor:"Fortune favors the buzzed.",          effect:{ critChance:0.15, critMult:5 }, duration:40,  baseCost:300,  costScale:1.7 },
+    { id:"frenzyVial",  name:"Frenzy Vial",       icon:"⚗️", flavor:"Your hands move before you think.",   effect:{ autoClick:3 },                 duration:30,  baseCost:400,  costScale:1.8 },
+  ];
+  // Runtime state: { defId, expiresAt } per active potion. Multiple potions can be active at once (different effects stack additively via getTotalMult);
+  // re-drinking the same potion extends its duration rather than stacking magnitude.
+  let activeBuffs   = [];
+  let potionsBought = {};  // id -> total purchase count this run (resets on ascend), used for cost scaling
+
   const shardShop = [
     { id: "startGold",  name: "Head Start",      desc: "Start each run with 200 gold",        cost: 2, owned: 0, max: 5  },
     { id: "goldBonus",  name: "Golden Touch",     desc: "+10% all gold per level",              cost: 3, owned: 0, max: 10 },
@@ -915,59 +996,69 @@
     { id: "freeSquire", name: "Ghostly Squire",   desc: "Start each run with 1 free Squire",    cost: 5, owned: 0, max: 3  },
   ];
 
-  // ── 45 Achievements ──
+  // ── 52 Achievements. Each grants a one-time gold reward on unlock (reward field, scaled to difficulty); ──
+  // ── total unlocked count also feeds a small permanent goldMult/dpsMult bonus (ACHIEVEMENT_POWER_PER_UNLOCK), never reset by Ascend. ──
+  const ACHIEVEMENT_POWER_PER_UNLOCK = 0.005; // +0.5% gold AND +0.5% DPS per achievement unlocked (e.g. 52/52 = +26%)
   const achievements = [
     // Killing (9)
-    { name: "First Blood",     desc: "Kill your first monster",           unlocked: false, check: () => totalKills >= 1 },
-    { name: "Monster Slayer",  desc: "Kill 10 monsters",                  unlocked: false, check: () => totalKills >= 10 },
-    { name: "Hundred Kills",   desc: "Kill 100 monsters",                 unlocked: false, check: () => totalKills >= 100 },
-    { name: "Thousand Kills",  desc: "Kill 1,000 monsters",               unlocked: false, check: () => totalKills >= 1000 },
-    { name: "Ten Thousand",    desc: "Kill 10,000 monsters",              unlocked: false, check: () => totalKills >= 10000 },
-    { name: "Boss Slayer",     desc: "Defeat your first boss",            unlocked: false, check: () => bossKills >= 1 },
-    { name: "Boss Hunter",     desc: "Defeat 5 bosses",                   unlocked: false, check: () => bossKills >= 5 },
-    { name: "Boss Destroyer",  desc: "Defeat 20 bosses",                  unlocked: false, check: () => bossKills >= 20 },
-    { name: "Void Walker",     desc: "Defeat 100 bosses",                 unlocked: false, check: () => bossKills >= 100 },
+    { name: "First Blood",     desc: "Kill your first monster",           unlocked: false, reward: 20,      check: () => totalKills >= 1 },
+    { name: "Monster Slayer",  desc: "Kill 10 monsters",                  unlocked: false, reward: 50,      check: () => totalKills >= 10 },
+    { name: "Hundred Kills",   desc: "Kill 100 monsters",                 unlocked: false, reward: 200,     check: () => totalKills >= 100 },
+    { name: "Thousand Kills",  desc: "Kill 1,000 monsters",               unlocked: false, reward: 1000,    check: () => totalKills >= 1000 },
+    { name: "Ten Thousand",    desc: "Kill 10,000 monsters",              unlocked: false, reward: 8000,    check: () => totalKills >= 10000 },
+    { name: "Boss Slayer",     desc: "Defeat your first boss",            unlocked: false, reward: 100,     check: () => bossKills >= 1 },
+    { name: "Boss Hunter",     desc: "Defeat 5 bosses",                   unlocked: false, reward: 500,     check: () => bossKills >= 5 },
+    { name: "Boss Destroyer",  desc: "Defeat 20 bosses",                  unlocked: false, reward: 2500,    check: () => bossKills >= 20 },
+    { name: "Void Walker",     desc: "Defeat 100 bosses",                 unlocked: false, reward: 15000,   check: () => bossKills >= 100 },
     // Floors (9)
-    { name: "First Steps",     desc: "Reach floor 5",                     unlocked: false, check: () => currentFloor >= 5 },
-    { name: "Going Deeper",    desc: "Reach floor 10",                    unlocked: false, check: () => currentFloor >= 10 },
-    { name: "Boss Country",    desc: "Reach floor 20",                    unlocked: false, check: () => currentFloor >= 20 },
-    { name: "Veteran",         desc: "Reach floor 30",                    unlocked: false, check: () => currentFloor >= 30 },
-    { name: "Dungeon Master",  desc: "Reach floor 50",                    unlocked: false, check: () => currentFloor >= 50 },
-    { name: "Legendary",       desc: "Reach floor 75",                    unlocked: false, check: () => currentFloor >= 75 },
-    { name: "Immortal",        desc: "Reach floor 100",                   unlocked: false, check: () => currentFloor >= 100 },
-    { name: "Mythic",          desc: "Reach floor 150",                   unlocked: false, check: () => currentFloor >= 150 },
-    { name: "Eternal",         desc: "Reach floor 200",                   unlocked: false, check: () => currentFloor >= 200 },
+    { name: "First Steps",     desc: "Reach floor 5",                     unlocked: false, reward: 50,      check: () => currentFloor >= 5 },
+    { name: "Going Deeper",    desc: "Reach floor 10",                    unlocked: false, reward: 150,     check: () => currentFloor >= 10 },
+    { name: "Boss Country",    desc: "Reach floor 20",                    unlocked: false, reward: 500,     check: () => currentFloor >= 20 },
+    { name: "Veteran",         desc: "Reach floor 30",                    unlocked: false, reward: 1500,    check: () => currentFloor >= 30 },
+    { name: "Dungeon Master",  desc: "Reach floor 50",                    unlocked: false, reward: 5000,    check: () => currentFloor >= 50 },
+    { name: "Legendary",       desc: "Reach floor 75",                    unlocked: false, reward: 15000,   check: () => currentFloor >= 75 },
+    { name: "Immortal",        desc: "Reach floor 100",                   unlocked: false, reward: 40000,   check: () => currentFloor >= 100 },
+    { name: "Mythic",          desc: "Reach floor 150",                   unlocked: false, reward: 120000,  check: () => currentFloor >= 150 },
+    { name: "Eternal",         desc: "Reach floor 200",                   unlocked: false, reward: 350000,  check: () => currentFloor >= 200 },
     // Gold (8)
-    { name: "Pocket Change",   desc: "Earn 100 total gold",               unlocked: false, check: () => totalGoldEarned >= 100 },
-    { name: "Saving Up",       desc: "Earn 1,000 total gold",             unlocked: false, check: () => totalGoldEarned >= 1000 },
-    { name: "Small Fortune",   desc: "Earn 10,000 total gold",            unlocked: false, check: () => totalGoldEarned >= 10000 },
-    { name: "Rich",            desc: "Earn 100,000 total gold",           unlocked: false, check: () => totalGoldEarned >= 100000 },
-    { name: "Millionaire",     desc: "Earn 1,000,000 total gold",         unlocked: false, check: () => totalGoldEarned >= 1e6 },
-    { name: "Gold Hoarder",    desc: "Hold 10,000 gold at once",          unlocked: false, check: () => gold >= 10000 },
-    { name: "The Treasury",    desc: "Hold 100,000 gold at once",         unlocked: false, check: () => gold >= 100000 },
-    { name: "Dragon's Hoard",  desc: "Hold 1,000,000 gold at once",       unlocked: false, check: () => gold >= 1e6 },
+    { name: "Pocket Change",   desc: "Earn 100 total gold",               unlocked: false, reward: 20,      check: () => totalGoldEarned >= 100 },
+    { name: "Saving Up",       desc: "Earn 1,000 total gold",             unlocked: false, reward: 100,     check: () => totalGoldEarned >= 1000 },
+    { name: "Small Fortune",   desc: "Earn 10,000 total gold",            unlocked: false, reward: 500,     check: () => totalGoldEarned >= 10000 },
+    { name: "Rich",            desc: "Earn 100,000 total gold",           unlocked: false, reward: 2500,    check: () => totalGoldEarned >= 100000 },
+    { name: "Millionaire",     desc: "Earn 1,000,000 total gold",         unlocked: false, reward: 15000,   check: () => totalGoldEarned >= 1e6 },
+    { name: "Gold Hoarder",    desc: "Hold 10,000 gold at once",          unlocked: false, reward: 500,     check: () => gold >= 10000 },
+    { name: "The Treasury",    desc: "Hold 100,000 gold at once",         unlocked: false, reward: 3000,    check: () => gold >= 100000 },
+    { name: "Dragon's Hoard",  desc: "Hold 1,000,000 gold at once",       unlocked: false, reward: 20000,   check: () => gold >= 1e6 },
     // Upgrades (9)
-    { name: "First Purchase",  desc: "Buy any weapon upgrade",            unlocked: false, check: () => weaponsBought.sword || weaponsBought.gloves || weaponsBought.axe },
-    { name: "Armed & Ready",   desc: "Buy a Better Sword",                unlocked: false, check: () => weaponsBought.sword },
-    { name: "Full Arsenal",    desc: "Buy all 3 weapon upgrades",         unlocked: false, check: () => weaponsBought.sword && weaponsBought.gloves && weaponsBought.axe },
-    { name: "Hired Help",      desc: "Buy your first unit",               unlocked: false, check: () => totalUnits() >= 1 },
-    { name: "Small Party",     desc: "Own 5 units total",                 unlocked: false, check: () => totalUnits() >= 5 },
-    { name: "Warband",         desc: "Own 20 units total",                unlocked: false, check: () => totalUnits() >= 20 },
-    { name: "Legion",          desc: "Own 50 units total",                unlocked: false, check: () => totalUnits() >= 50 },
-    { name: "Full Roster",     desc: "Own at least 1 of each unit type",  unlocked: false, check: () => units.squire.count > 0 && units.rogue.count > 0 && units.mage.count > 0 },
-    { name: "Click Master",    desc: "Reach 100 click damage",            unlocked: false, check: () => clickDamage >= 100 },
+    { name: "First Purchase",  desc: "Buy any weapon upgrade",            unlocked: false, reward: 50,      check: () => Object.keys(weaponsBought).length >= 1 },
+    { name: "Armed & Ready",   desc: "Buy a Better Sword",                unlocked: false, reward: 50,      check: () => weaponsBought.sword },
+    { name: "Full Arsenal",    desc: "Buy the first 3 tiers of a weapon path", unlocked: false, reward: 800, check: () => Object.keys(weaponsBought).length >= 3 },
+    { name: "Hired Help",      desc: "Buy your first unit",               unlocked: false, reward: 50,      check: () => totalUnits() >= 1 },
+    { name: "Small Party",     desc: "Own 5 units total",                 unlocked: false, reward: 300,     check: () => totalUnits() >= 5 },
+    { name: "Warband",         desc: "Own 20 units total",                unlocked: false, reward: 2000,    check: () => totalUnits() >= 20 },
+    { name: "Legion",          desc: "Own 50 units total",                unlocked: false, reward: 10000,   check: () => totalUnits() >= 50 },
+    { name: "Full Roster",     desc: "Own at least 1 of each unit type",  unlocked: false, reward: 1000,    check: () => units.squire.count > 0 && units.rogue.count > 0 && units.mage.count > 0 },
+    { name: "Click Master",    desc: "Reach 100 click damage",            unlocked: false, reward: 1500,    check: () => clickDamage >= 100 },
+    { name: "Master Trainer",  desc: "Reach mastery level 10 on any unit",unlocked: false, reward: 3000,    check: () => Object.values(units).some(u => u.mastery >= 10) },
     // Prestige (5)
-    { name: "Brave Soul",      desc: "Prestige for the first time",       unlocked: false, check: () => prestigeCount >= 1 },
-    { name: "Twice Born",      desc: "Prestige 3 times",                  unlocked: false, check: () => prestigeCount >= 3 },
-    { name: "Phoenix",         desc: "Prestige 5 times",                  unlocked: false, check: () => prestigeCount >= 5 },
-    { name: "Reborn",          desc: "Prestige 10 times",                 unlocked: false, check: () => prestigeCount >= 10 },
-    { name: "Soul Collector",  desc: "Accumulate 50 total Soul Shards",   unlocked: false, check: () => totalShardsEarned >= 50 },
+    { name: "Brave Soul",      desc: "Prestige for the first time",       unlocked: false, reward: 0,       check: () => prestigeCount >= 1 },
+    { name: "Twice Born",      desc: "Prestige 3 times",                  unlocked: false, reward: 0,       check: () => prestigeCount >= 3 },
+    { name: "Phoenix",         desc: "Prestige 5 times",                  unlocked: false, reward: 0,       check: () => prestigeCount >= 5 },
+    { name: "Reborn",          desc: "Prestige 10 times",                 unlocked: false, reward: 0,       check: () => prestigeCount >= 10 },
+    { name: "Soul Collector",  desc: "Accumulate 50 total Soul Shards",   unlocked: false, reward: 0,       check: () => totalShardsEarned >= 50 },
     // DPS (5)
-    { name: "Getting There",   desc: "Reach 10 passive DPS",              unlocked: false, check: () => passiveDamage >= 10 },
-    { name: "Speed Demon",     desc: "Reach 100 passive DPS",             unlocked: false, check: () => passiveDamage >= 100 },
-    { name: "War Machine",     desc: "Reach 1,000 passive DPS",           unlocked: false, check: () => passiveDamage >= 1000 },
-    { name: "World Ender",     desc: "Reach 10,000 passive DPS",          unlocked: false, check: () => passiveDamage >= 10000 },
-    { name: "Shard Master",    desc: "Spend 20 Soul Shards on upgrades",  unlocked: false, check: () => shardsSpent >= 20 },
+    { name: "Getting There",   desc: "Reach 10 passive DPS",              unlocked: false, reward: 100,     check: () => passiveDamage >= 10 },
+    { name: "Speed Demon",     desc: "Reach 100 passive DPS",             unlocked: false, reward: 800,     check: () => passiveDamage >= 100 },
+    { name: "War Machine",     desc: "Reach 1,000 passive DPS",           unlocked: false, reward: 5000,    check: () => passiveDamage >= 1000 },
+    { name: "World Ender",     desc: "Reach 10,000 passive DPS",          unlocked: false, reward: 30000,   check: () => passiveDamage >= 10000 },
+    { name: "Shard Master",    desc: "Spend 20 Soul Shards on upgrades",  unlocked: false, reward: 0,       check: () => shardsSpent >= 20 },
+    // Potions (3)
+    { name: "First Sip",       desc: "Drink your first potion",           unlocked: false, reward: 30,      check: () => totalPotionsBought >= 1 },
+    { name: "Alchemist",       desc: "Drink 25 potions total",            unlocked: false, reward: 600,     check: () => totalPotionsBought >= 25 },
+    { name: "Mixologist",      desc: "Have 3 different potions active at once", unlocked: false, reward: 400, check: () => activeBuffs.length >= 3 },
+    // Boss mechanics (2)
+    { name: "Shield Breaker",  desc: "Break a boss's shield",             unlocked: false, reward: 200,     check: () => shieldsBroken >= 1 },
+    { name: "Phase Master",    desc: "Survive 10 boss phase shifts",      unlocked: false, reward: 1200,    check: () => phaseShiftsTriggered >= 10 },
   ];
 
   // ── Run-state (resets on ascend) ──
@@ -978,25 +1069,83 @@
   let passiveDamage = 0;
   let currentFloor  = 1;
   let monsterDead   = false;
-  let weaponsBought = { sword: false, gloves: false, axe: false, bow: false, tome: false, stormstrike: false, shadowreaper: false, deathscythe:false };
+  let weaponsBought = {}; // tier id -> true, scoped to selectedWeaponPath; resets on ascend
+  let weaponBonus = { critChance: 0, critMult: 0, dpsMult: 0 }; // accumulated from Duelist/Channeler tier purchases; resets on ascend
 
-  const weapons = {
-    sword:       { cost: 60,     bonus: 5   },
-    gloves:      { cost: 300,    bonus: 10  },
-    axe:         { cost: 1000,   bonus: 25  },
-    bow:         { cost: 2500,   bonus: 20  },
-    tome:        { cost: 7500,   bonus: 35  },
-    stormstrike: { cost: 25000,  bonus: 80  },
-    shadowreaper:{ cost: 100000, bonus: 150 },
-    deathscythe:{ cost: 500000, bonus: 300 },
+  // ── Boss mechanics: shield (click-only) + multi-phase HP ──
+  let monsterShield     = 0;     // current shield HP; only click damage reduces this
+  let monsterShieldMax  = 0;
+  let bossPhaseCount    = 0;     // total phases for the current boss (0 if not a boss)
+  let bossPhaseIndex    = 0;     // which phase boundary has been crossed (0 = none yet)
+  let phaseShiftActive  = false; // brief window after crossing a phase boundary: shield reforms, no dmg processed
+
+  // ── Weapon paths: pick one per ascension run. Each tier purchase is permanent for the run. ──
+  const weaponPaths = {
+    brute: {
+      name: "Brute", icon: "🗡️", desc: "Pure flat click damage. No frills.",
+      tiers: [
+        { id:"sword",       name:"Better Sword",  icon:"🗡️", cost:60,     clickBonus:5   },
+        { id:"gloves",      name:"Iron Gloves",   icon:"🧤", cost:300,    clickBonus:10  },
+        { id:"axe",         name:"Battle Axe",    icon:"🪓", cost:1000,   clickBonus:25  },
+        { id:"warhammer",   name:"Warhammer",     icon:"🔨", cost:2500,   clickBonus:55  },
+        { id:"colossus",    name:"Colossus Blade",icon:"⚔️", cost:7500,   clickBonus:100 },
+        { id:"stormstrike", name:"Stormstrike",   icon:"⚡", cost:25000,  clickBonus:220 },
+        { id:"shadowreaper",name:"Shadowreaper",  icon:"🌑", cost:100000, clickBonus:450 },
+        { id:"deathscythe", name:"Deathscythe",   icon:"💀", cost:500000, clickBonus:900 },
+      ],
+    },
+    duelist: {
+      name: "Duelist", icon: "🎯", desc: "Lower damage per tier, but stacks crit chance and crit damage.",
+      tiers: [
+        { id:"sword",      name:"Better Sword",   icon:"🗡️", cost:60,     clickBonus:5  },
+        { id:"daggers",    name:"Twin Daggers",   icon:"🔪", cost:300,    clickBonus:6,  critChance:0.02, critMult:1 },
+        { id:"rapier",     name:"Rapier",         icon:"🤺", cost:1000,   clickBonus:14, critChance:0.03, critMult:1.5 },
+        { id:"bow",        name:"Elven Bow",      icon:"🏹", cost:2500,   clickBonus:12, critChance:0.04, critMult:2 },
+        { id:"crossbow",   name:"Hunter's Crossbow",icon:"🎯", cost:7500, clickBonus:24, critChance:0.05, critMult:2.5 },
+        { id:"venomfang",  name:"Venomfang",      icon:"🐍", cost:25000,  clickBonus:50, critChance:0.06, critMult:3 },
+        { id:"nightedge",  name:"Nightedge",      icon:"🌙", cost:100000, clickBonus:100,critChance:0.07, critMult:4 },
+        { id:"executioner",name:"Executioner",    icon:"🪦", cost:500000, clickBonus:200,critChance:0.08, critMult:5 },
+      ],
+    },
+    channeler: {
+      name: "Channeler", icon: "🔮", desc: "Lower damage per tier, but boosts passive DPS too.",
+      tiers: [
+        { id:"sword",   name:"Better Sword",  icon:"🗡️", cost:60,     clickBonus:5  },
+        { id:"wand",    name:"Apprentice Wand", icon:"🪄", cost:300,    clickBonus:6,  dpsMult:0.04 },
+        { id:"tome",    name:"Spell Tome",    icon:"🔮", cost:1000,   clickBonus:14, dpsMult:0.06 },
+        { id:"focus",   name:"Arcane Focus",  icon:"🔵", cost:2500,   clickBonus:12, dpsMult:0.09 },
+        { id:"staff",   name:"Ember Staff",   icon:"🔥", cost:7500,   clickBonus:24, dpsMult:0.12 },
+        { id:"orb",     name:"Storm Orb",     icon:"🌩️", cost:25000,  clickBonus:50, dpsMult:0.16 },
+        { id:"grimoire",name:"Void Grimoire", icon:"📕", cost:100000, clickBonus:100,dpsMult:0.22 },
+        { id:"scepter", name:"Scepter of Ruin",icon:"👑", cost:500000, clickBonus:200,dpsMult:0.30 },
+      ],
+    },
   };
+
+  let selectedWeaponPath = null; // null until the player picks brute/duelist/channeler this run
   const units = {
-    squire:   { baseCost: 200,   dps: 2,   count: 0 },
-    rogue:    { baseCost: 500,   dps: 5,   count: 0 },
-    mage:     { baseCost: 1500,  dps: 15,  count: 0 },
-    knight:   { baseCost: 8000,  dps: 80,  count: 0, minFloor: 15 },
-    archmage: { baseCost: 35000, dps: 400, count: 0, minFloor: 30 },
+    squire:   { baseCost: 200,    dps: 2,     count: 0, mastery: 0 },
+    rogue:    { baseCost: 500,    dps: 5,     count: 0, mastery: 0 },
+    mage:     { baseCost: 1500,   dps: 15,    count: 0, mastery: 0 },
+    knight:   { baseCost: 8000,   dps: 80,    count: 0, mastery: 0, minFloor: 15 },
+    archmage: { baseCost: 35000,  dps: 400,   count: 0, mastery: 0, minFloor: 30 },
+    dragoon:  { baseCost: 150000, dps: 2000,  count: 0, mastery: 0, minFloor: 50 },
+    titan:    { baseCost: 700000, dps: 10000, count: 0, mastery: 0, minFloor: 80 },
   };
+  const unitMeta = {
+    squire:   { icon: "🛡️", name: "Squire" },
+    rogue:    { icon: "🗡️", name: "Rogue" },
+    mage:     { icon: "🧙", name: "Mage" },
+    knight:   { icon: "⚔️", name: "Knight" },
+    archmage: { icon: "🔮", name: "Archmage" },
+    dragoon:  { icon: "🐉", name: "Dragoon" },
+    titan:    { icon: "🗿", name: "Titan" },
+  };
+  // Mastery: infinitely-repeatable per-unit gold sink. Each level adds +4% to that unit's dps.
+  // Cost scales steeply (×1.4/level off a base tied to the unit's own cost) so it mainly matters once
+  // a player has saturated unit purchases and weapon tiers and still has gold piling up.
+  const MASTERY_DPS_PER_LEVEL = 0.04;
+  const MASTERY_COST_SCALE    = 1.4;
 
   // ── Persistent state (survives ascend) ──
   let totalKills        = 0;
@@ -1006,6 +1155,9 @@
   let shardBalance      = 0;
   let totalShardsEarned = 0;
   let shardsSpent       = 0;
+  let totalPotionsBought = 0;
+  let shieldsBroken         = 0;
+  let phaseShiftsTriggered  = 0;
 
   // ── Misc ──
   let killMsgTimer      = null;
@@ -1034,11 +1186,43 @@
 
   function recalcPassive() {
     passiveDamage = 0;
-    for (const k in units) passiveDamage += units[k].count * units[k].dps;
+    for (const k in units) {
+      const u = units[k];
+      passiveDamage += u.count * u.dps * (1 + u.mastery * MASTERY_DPS_PER_LEVEL);
+    }
+  }
+
+  function getMasteryCost(id) {
+    const u = units[id];
+    return Math.floor(u.baseCost * 0.5 * Math.pow(MASTERY_COST_SCALE, u.mastery));
+  }
+
+  function buyMastery(id) {
+    const cost = getMasteryCost(id);
+    if (gold < cost) { document.getElementById("shop-msg").textContent = "Not enough gold!"; return; }
+    gold -= cost;
+    units[id].mastery += 1;
+    recalcPassive();
+    updateGold();
+    renderStats();
+    renderUnitCosts();
+    document.getElementById("shop-msg").textContent = "";
+    playBuySound();
+    checkAchievements();
+    saveGame();
+  }
+
+  function unlockedHeroCount() {
+    return heroes.filter(h => h.unlocked).length;
+  }
+
+  function totalHeroLevels() {
+    return heroes.reduce((sum, h) => sum + (h.unlocked ? h.level : 0), 0);
   }
 
   function getTotalMult(key) {
     let total = 0;
+    if (weaponBonus[key]) total += weaponBonus[key];
     for (const slot in equipped) {
       const item = equipped[slot];
       if (item && item.bonus[key]) total += item.bonus[key];
@@ -1046,8 +1230,124 @@
     for (const h of heroes) {
       if (!h.unlocked) continue;
       total += (h.bonus[key] || 0) + (h.levelBonus?.[key] || 0) * h.level;
+      // Roster synergy: some heroes' bonuses scale with how many OTHER heroes are unlocked/leveled.
+      if (h.perRosterMult?.[key]) total += h.perRosterMult[key] * (unlockedHeroCount() - 1);
+      if (h.perHeroLevelMult?.[key]) total += h.perHeroLevelMult[key] * (totalHeroLevels() - h.level);
+    }
+    for (const buff of activeBuffs) {
+      const def = potionDefs.find(p => p.id === buff.defId);
+      if (def && def.effect[key]) total += def.effect[key];
+    }
+    // Achievement Power: every unlocked achievement adds a tiny permanent goldMult + dpsMult, never resets.
+    if (key === "goldMult" || key === "dpsMult") {
+      total += achievements.filter(a => a.unlocked).length * ACHIEVEMENT_POWER_PER_UNLOCK;
     }
     return total;
+  }
+
+  function pruneExpiredBuffs() {
+    const now = Date.now();
+    const before = activeBuffs.length;
+    activeBuffs = activeBuffs.filter(b => b.expiresAt > now);
+    return activeBuffs.length !== before;
+  }
+
+  function getAutoClickRate() {
+    let rate = 0;
+    for (const buff of activeBuffs) {
+      const def = potionDefs.find(p => p.id === buff.defId);
+      if (def && def.effect.autoClick) rate += def.effect.autoClick;
+    }
+    return rate;
+  }
+
+  function getPotionCost(id) {
+    const def   = potionDefs.find(p => p.id === id);
+    const bought = potionsBought[id] || 0;
+    return Math.floor(def.baseCost * Math.pow(def.costScale, bought));
+  }
+
+  function buyPotion(id) {
+    const def  = potionDefs.find(p => p.id === id);
+    const cost = getPotionCost(id);
+    if (gold < cost) {
+      document.getElementById("potion-shop-msg")?.remove();
+      showToast("Not enough gold", "Need " + formatNum(cost) + "g for " + def.name + ".");
+      return;
+    }
+    gold -= cost;
+    potionsBought[id] = (potionsBought[id] || 0) + 1;
+    totalPotionsBought += 1;
+
+    const existing = activeBuffs.find(b => b.defId === id);
+    const now = Date.now();
+    if (existing) {
+      existing.expiresAt = Math.max(existing.expiresAt, now) + def.duration * 1000;
+    } else {
+      activeBuffs.push({ defId: id, expiresAt: now + def.duration * 1000 });
+    }
+
+    updateGold();
+    renderStats();
+    renderActiveBuffs();
+    renderPotionShop();
+    document.getElementById("potion-dot").style.display = "inline";
+    playBuySound();
+    showToast(def.icon + " " + def.name, "Active for " + def.duration + "s.");
+    checkAchievements();
+    saveGame();
+  }
+
+  function renderActiveBuffs() {
+    const container = document.getElementById("active-buffs-list");
+    if (!container) return;
+    pruneExpiredBuffs();
+    if (!activeBuffs.length) {
+      container.innerHTML = `<p style="font-size:0.78rem;color:#9a9ab0;text-align:center;margin:0.4rem 0 1rem">No active effects.</p>`;
+      document.getElementById("potion-dot").style.display = "none";
+      return;
+    }
+    document.getElementById("potion-dot").style.display = "inline";
+    container.innerHTML = "";
+    const now = Date.now();
+    for (const buff of activeBuffs) {
+      const def     = potionDefs.find(p => p.id === buff.defId);
+      const secsLeft= Math.max(0, Math.ceil((buff.expiresAt - now) / 1000));
+      const effectStr = Object.entries(def.effect).map(([k,v]) => k === "autoClick" ? ("+" + v + " auto-clicks/sec") : bonusLabel(k, v)).join(", ");
+      const div = document.createElement("div");
+      div.className = "active-buff";
+      div.innerHTML = `
+        <span class="active-buff-icon">${def.icon}</span>
+        <div class="active-buff-info">
+          <div class="active-buff-name">${def.name}</div>
+          <div class="active-buff-effect">${effectStr}</div>
+        </div>
+        <div class="active-buff-timer">${secsLeft}s</div>`;
+      container.appendChild(div);
+    }
+  }
+
+  function renderPotionShop() {
+    const container = document.getElementById("potion-shop-list");
+    if (!container) return;
+    container.innerHTML = "";
+    for (const def of potionDefs) {
+      const cost = getPotionCost(def.id);
+      const canAfford = gold >= cost;
+      const effectStr = Object.entries(def.effect).map(([k,v]) => k === "autoClick" ? ("+" + v + " auto-clicks/sec") : bonusLabel(k, v)).join(", ");
+      const btn = document.createElement("button");
+      btn.className = "upgrade-btn";
+      btn.onclick = () => buyPotion(def.id);
+      btn.innerHTML = `
+        <span class="btn-left">
+          <span class="btn-name">${def.icon} ${def.name}</span>
+          <span class="btn-effect">${effectStr} — ${def.duration}s</span>
+        </span>
+        <span class="btn-right">
+          <span class="btn-cost" style="color:${canAfford ? "#c9a84c" : "#664"}">🪙 ${formatNum(cost)}g</span>
+        </span>`;
+      container.appendChild(btn);
+    }
   }
 
   function getUnitCost(id) {
@@ -1091,6 +1391,7 @@
       case "unitDiscount": return "-" + pct + "% unit costs";
       case "critChance":   return "+" + pct + "% crit chance";
       case "critMult":     return val + "× crit damage";
+      case "attackSpeedMult": return "+" + pct + "% attack speed";
       default:             return "+" + pct + "% " + key;
     }
   }
@@ -1131,34 +1432,130 @@
     localStorage.clear(); location.reload();
   }
 
-  function updateWeaponButtons() {
-    Object.keys(weapons).forEach(id => {
-      const btn = document.getElementById("btn-" + id);
-      if (!btn) return;
-      const costEl = btn.querySelector(".btn-cost");
-      if (weaponsBought[id]) {
-        btn.style.opacity = "0.45"; btn.style.cursor = "default";
-        if (costEl) costEl.textContent = "Purchased";
-      } else {
-        btn.style.opacity = ""; btn.style.cursor = "";
-        if (costEl) costEl.textContent = "🪙 " + formatNum(weapons[id].cost) + "g";
-      }
-    });
-    const b = weaponsBought;
-    const s = id => { const el = document.getElementById("btn-" + id); if (el) el.style.display = ""; };
-    const h = id => { const el = document.getElementById("btn-" + id); if (el) el.style.display = "none"; };
-    if (b.axe)         s("bow");         else h("bow");
-    if (b.bow)         s("tome");        else h("tome");
-    if (b.tome)        s("stormstrike"); else h("stormstrike");
-    if (b.stormstrike) s("shadowreaper");else h("shadowreaper");
-    if (b.shadowreaper) s("deathscythe"); else h("deathscythe");
+  function getWeaponTierBonusDesc(tier) {
+    const parts = ["+" + tier.clickBonus + " click damage"];
+    if (tier.critChance) parts.push(bonusLabel("critChance", tier.critChance));
+    if (tier.critMult)   parts.push("+" + tier.critMult + "× crit dmg");
+    if (tier.dpsMult)    parts.push(bonusLabel("dpsMult", tier.dpsMult));
+    return parts.join(", ");
   }
 
-  function updateUnitVisibility() {
-    const knight   = document.getElementById("btn-unit-knight");
-    const archmage = document.getElementById("btn-unit-archmage");
-    if (knight)   knight.style.display   = currentFloor >= units.knight.minFloor   ? "flex" : "none";
-    if (archmage) archmage.style.display = currentFloor >= units.archmage.minFloor ? "flex" : "none";
+  function selectWeaponPath(pathId) {
+    if (selectedWeaponPath || !weaponsBought.sword) return;
+    selectedWeaponPath = pathId;
+    updateWeaponButtons();
+    saveGame();
+  }
+
+  function updateWeaponButtons() {
+    const choiceEl = document.getElementById("weapon-path-choice");
+    const listEl   = document.getElementById("weapon-path-list");
+    if (!choiceEl || !listEl) return;
+
+    if (!weaponsBought.sword) {
+      // Starter sword hasn't been bought yet — show only that, no path choice yet.
+      choiceEl.innerHTML = "";
+      listEl.innerHTML = "";
+      const tier = weaponPaths.brute.tiers[0];
+      const btn = document.createElement("button");
+      btn.className = "upgrade-btn";
+      btn.onclick = () => buyUpgrade("sword");
+      btn.innerHTML = `
+        <span class="btn-left"><span class="btn-name">${tier.icon} ${tier.name}</span><span class="btn-effect">${getWeaponTierBonusDesc(tier)}</span></span>
+        <span class="btn-right"><span class="btn-cost">🪙 ${formatNum(tier.cost)}g</span></span>`;
+      listEl.appendChild(btn);
+      return;
+    }
+
+    if (!selectedWeaponPath) {
+      listEl.innerHTML = "";
+      choiceEl.innerHTML = `<p style="font-size:0.78rem;color:#9a9ab0;text-align:center;margin:0.2rem 0 0.8rem">Choose your weapon path for this run. Locked until your next Ascend.</p>`;
+      for (const pathId in weaponPaths) {
+        const path = weaponPaths[pathId];
+        const card = document.createElement("button");
+        card.className = "upgrade-btn";
+        card.onclick = () => selectWeaponPath(pathId);
+        card.innerHTML = `
+          <span class="btn-left"><span class="btn-name">${path.icon} ${path.name}</span><span class="btn-effect">${path.desc}</span></span>
+          <span class="btn-right"><span class="btn-cost">Choose</span></span>`;
+        choiceEl.appendChild(card);
+      }
+      return;
+    }
+
+    choiceEl.innerHTML = "";
+    listEl.innerHTML = "";
+    const path = weaponPaths[selectedWeaponPath];
+    const header = document.createElement("p");
+    header.style = "font-size:0.78rem;color:#9a9ab0;text-align:center;margin:0.2rem 0 0.8rem";
+    header.textContent = path.icon + " " + path.name + " path — locked in until next Ascend.";
+    listEl.appendChild(header);
+
+    for (let i = 1; i < path.tiers.length; i++) { // tier 0 is the shared starter sword, already bought
+      const tier = path.tiers[i];
+      const prevTier = path.tiers[i - 1];
+      const unlocked = !!weaponsBought[prevTier.id];
+      if (!unlocked) break; // gate strictly sequential, same as before
+
+      const btn = document.createElement("button");
+      btn.className = "upgrade-btn";
+      if (weaponsBought[tier.id]) {
+        btn.style.opacity = "0.45"; btn.style.cursor = "default";
+        btn.innerHTML = `
+          <span class="btn-left"><span class="btn-name">${tier.icon} ${tier.name}</span><span class="btn-effect">${getWeaponTierBonusDesc(tier)}</span></span>
+          <span class="btn-right"><span class="btn-cost">Purchased</span></span>`;
+      } else {
+        btn.onclick = () => buyUpgrade(tier.id);
+        btn.innerHTML = `
+          <span class="btn-left"><span class="btn-name">${tier.icon} ${tier.name}</span><span class="btn-effect">${getWeaponTierBonusDesc(tier)}</span></span>
+          <span class="btn-right"><span class="btn-cost">🪙 ${formatNum(tier.cost)}g</span></span>`;
+      }
+      listEl.appendChild(btn);
+    }
+  }
+
+  function renderUnits() {
+    const container = document.getElementById("unit-list");
+    if (!container) return;
+    container.innerHTML = "";
+    for (const id in units) {
+      const u = units[id];
+      if (u.minFloor && currentFloor < u.minFloor) continue;
+      const meta = unitMeta[id];
+      const cost = getUnitCost(id);
+      const masteryCost = getMasteryCost(id);
+      const masteryPctTotal = Math.round(u.mastery * MASTERY_DPS_PER_LEVEL * 100);
+
+      const card = document.createElement("div");
+      card.className = "unit-card";
+
+      const buyBtn = document.createElement("button");
+      buyBtn.className = "upgrade-btn unit-buy-btn";
+      buyBtn.onclick = () => buyUnit(id);
+      buyBtn.innerHTML = `
+        <span class="btn-left"><span class="btn-name">${meta.icon} ${meta.name}</span><span class="btn-effect">+${formatNum(u.dps)} dmg / sec</span></span>
+        <span class="btn-right"><span class="btn-cost">🪙 ${formatNum(cost)}g</span><span class="count">owned: ${u.count}</span></span>`;
+      card.appendChild(buyBtn);
+
+      if (u.count > 0) {
+        const masteryRow = document.createElement("button");
+        masteryRow.className = "mastery-row";
+        masteryRow.onclick = () => buyMastery(id);
+        masteryRow.innerHTML = `
+          <span class="mastery-label">⭐ Mastery Lv.${u.mastery} <span class="mastery-pct">(+${masteryPctTotal}% dmg)</span></span>
+          <span class="mastery-cost">🪙 ${formatNum(masteryCost)}g</span>`;
+        card.appendChild(masteryRow);
+      }
+      container.appendChild(card);
+    }
+  }
+
+  const BASE_HOLD_ATTACK_DELAY = 220; // ms between auto-repeats while the attack button is held
+
+  function getAttackHoldDelay() {
+    // attackSpeedMult is a synergy-driven multiplier (e.g. Paladin's aura); higher = faster repeats
+    const speedMult = 1 + getTotalMult("attackSpeedMult");
+    return Math.max(60, BASE_HOLD_ATTACK_DELAY / speedMult);
   }
 
   function startAttackHold(event) {
@@ -1166,12 +1563,16 @@
     const pos = event.touches ? event.touches[0] : event;
     attack(pos);
     holdTimeout = setTimeout(() => {
-      holdInterval = setInterval(() => attack(null), 220);
+      const tick = () => {
+        attack(null);
+        holdInterval = setTimeout(tick, getAttackHoldDelay());
+      };
+      holdInterval = setTimeout(tick, getAttackHoldDelay());
     }, 300);
   }
 
   function stopAttackHold() {
-    clearTimeout(holdTimeout); clearInterval(holdInterval);
+    clearTimeout(holdTimeout); clearTimeout(holdInterval);
     holdTimeout = holdInterval = null;
   }
 
@@ -1187,6 +1588,31 @@
     const pct = monsterMaxHP > 0 ? (monsterHP / monsterMaxHP) * 100 : 0;
     document.getElementById("hp-fill").style.width = pct + "%";
     document.getElementById("hp-text").textContent = "HP: " + formatNum(monsterHP) + " / " + formatNum(monsterMaxHP);
+
+    const shieldWrap = document.getElementById("shield-bar-wrap");
+    const shieldText = document.getElementById("shield-text");
+    if (monsterShieldMax > 0 && monsterShield > 0) {
+      shieldWrap.classList.add("shield-active");
+      shieldText.classList.remove("hidden");
+      const sPct = (monsterShield / monsterShieldMax) * 100;
+      document.getElementById("shield-fill").style.width = sPct + "%";
+      shieldText.textContent = "🛡 " + formatNum(monsterShield) + " / " + formatNum(monsterShieldMax);
+    } else {
+      shieldWrap.classList.remove("shield-active");
+      shieldText.classList.add("hidden");
+    }
+
+    const pipsEl = document.getElementById("phase-pips");
+    if (bossPhaseCount > 0) {
+      pipsEl.innerHTML = "";
+      for (let i = 0; i < bossPhaseCount; i++) {
+        const pip = document.createElement("div");
+        pip.className = "phase-pip" + (i < bossPhaseIndex ? " pip-done" : i === bossPhaseIndex ? " pip-active" : "");
+        pipsEl.appendChild(pip);
+      }
+    } else {
+      pipsEl.innerHTML = "";
+    }
   }
 
   function renderStats() {
@@ -1196,6 +1622,15 @@
     if (atkDmg) atkDmg.textContent = formatNum(effClick) + " dmg";
     const effDPS = Math.floor(passiveDamage * (1 + getTotalMult("dpsMult")));
     document.getElementById("stat-dps").textContent = formatNum(effDPS) + " / sec";
+
+    const aldric = heroes.find(h => h.id === "aldric");
+    const speedRow = document.getElementById("stat-speed-row");
+    if (aldric?.unlocked) {
+      speedRow.classList.remove("hidden");
+      document.getElementById("stat-speed").textContent = "+" + Math.round(getTotalMult("attackSpeedMult") * 100) + "%";
+    } else {
+      speedRow.classList.add("hidden");
+    }
   }
 
   function updateShardDisplay() {
@@ -1224,10 +1659,7 @@
   }
 
   function renderUnitCosts() {
-    ["squire","rogue","mage","knight","archmage"].forEach(id => {
-      const el = document.getElementById("cost-" + id);
-      if (el) el.textContent = "🪙 " + formatNum(getUnitCost(id)) + "g";
-    });
+    renderUnits();
   }
 
   function renderShardUpgrades() {
@@ -1246,7 +1678,7 @@
           <span class="btn-effect">${u.desc}</span>
         </span>
         <span class="btn-right">
-          <span class="btn-cost shard-cost" style="color:${canAfford && !maxed ? "#9090ff" : "#334"}">${maxed ? "MAXED" : "⚡ " + u.cost}</span>
+          <span class="btn-cost shard-cost" style="color:${canAfford && !maxed ? "#9090ff" : "#7a7a98"}">${maxed ? "MAXED" : "⚡ " + u.cost}</span>
           <span class="count">${u.owned}/${u.max}</span>
         </span>`;
       container.appendChild(btn);
@@ -1260,20 +1692,27 @@
       const div = document.createElement("div");
       div.className = "achievement " + (a.unlocked ? "unlocked" : "locked");
       if (a.unlocked) {
-        div.innerHTML = `<span class="ach-icon">🏆</span><span class="ach-info"><span class="ach-name">${a.name}</span><span class="ach-desc">${a.desc}</span></span>`;
+        const rewardStr = a.reward > 0 ? `<span class="ach-reward">🪙 +${formatNum(a.reward)}g</span>` : "";
+        div.innerHTML = `<span class="ach-icon">🏆</span><span class="ach-info"><span class="ach-name">${a.name}</span><span class="ach-desc">${a.desc}</span></span>${rewardStr}`;
       } else {
         div.innerHTML = `<span class="ach-icon">🔒</span><span class="ach-info"><span class="ach-name">???</span><span class="ach-desc">${a.desc}</span></span>`;
       }
       container.appendChild(div);
     });
+    const power = document.getElementById("achievement-power");
+    if (power) {
+      const pct = (achievements.filter(a => a.unlocked).length * ACHIEVEMENT_POWER_PER_UNLOCK * 100).toFixed(1);
+      power.textContent = "🏅 Achievement Power: +" + pct + "% gold & DPS (permanent, never resets)";
+    }
   }
 
   function updateAchCount() {
     document.getElementById("ach-count").textContent = achievements.filter(a => a.unlocked).length;
+    document.getElementById("ach-total").textContent = achievements.length;
   }
 
   function renderEquipment() {
-    const slotLabels = { weapon: "⚔️ Weapon", armor: "🛡️ Armor", ring: "💍 Ring" };
+    const slotLabels = { weapon: "⚔️ Weapon", armor: "🛡️ Armor", ring: "💍 Jewelry" };
     const container  = document.getElementById("tab-gear-content");
     container.innerHTML = "";
     for (const slot of ["weapon","armor","ring"]) {
@@ -1326,12 +1765,13 @@
           <div class="hero-card-header">
             <div class="hero-icon">${h.icon}</div>
             <div>
-              <div class="hero-name">${h.name} <span style="color:#446;font-size:0.78rem">${h.title}</span></div>
+              <div class="hero-name">${h.name} <span style="color:#9a96b8;font-size:0.78rem">${h.title}</span></div>
               <div class="hero-class">${h.heroClass}</div>
             </div>
           </div>
           <div class="hero-flavor">${h.flavor}</div>
           <div class="hero-bonus">${heroBonusDesc(h)}</div>
+          ${h.synergyDesc ? `<div class="hero-synergy">🔗 ${h.synergyDesc}</div>` : ""}
           <div class="hero-footer">
             <span class="hero-level">Level ${h.level}/10</span>
             ${maxed
@@ -1354,14 +1794,16 @@
     }
   }
 
+  const TAB_ORDER = ["shop","gear","heroes","potions","shards","achievements"];
+
   function showTab(tab) {
-    ["shop","gear","heroes","shards","achievements"].forEach(t => {
+    TAB_ORDER.forEach(t => {
       const el = document.getElementById("tab-" + t);
       if (t !== tab) { el.style.display = "none"; return; }
       el.style.display = t === "shop" ? "flex" : "block";
     });
     document.querySelectorAll(".tab-btn").forEach((btn, i) => {
-      btn.classList.toggle("active", i === ["shop","gear","heroes","shards","achievements"].indexOf(tab));
+      btn.classList.toggle("active", i === TAB_ORDER.indexOf(tab));
     });
   }
 
@@ -1450,13 +1892,7 @@
     const cx = rect.left + rect.width / 2;
     const cy = rect.top  + rect.height / 2;
     const effDPSMult = 1 + getTotalMult("dpsMult");
-    const contributors = [
-      { count: units.squire.count,   dps: units.squire.dps   },
-      { count: units.rogue.count,    dps: units.rogue.dps    },
-      { count: units.mage.count,     dps: units.mage.dps     },
-      { count: units.knight.count,   dps: units.knight.dps   },
-      { count: units.archmage.count, dps: units.archmage.dps },
-    ].filter(u => u.count > 0);
+    const contributors = Object.values(units).map(u => ({ count: u.count, dps: u.dps })).filter(u => u.count > 0);
     if (!contributors.length) return;
     contributors.forEach((u, i) => {
       const dmg    = Math.floor(u.count * u.dps * effDPSMult);
@@ -1493,6 +1929,20 @@
     monsterMaxHP = Math.floor((isBoss ? base.hp * 2.5 : base.hp) * scale);
     monsterHP    = monsterMaxHP;
 
+    if (isBoss) {
+      bossPhaseCount   = floor % 10 === 0 ? 3 : 2; // every 2nd boss (floor % 10) gets an extra phase
+      bossPhaseIndex   = 0;
+      monsterShieldMax = Math.floor(monsterMaxHP * 0.35);
+      monsterShield    = monsterShieldMax;
+      phaseShiftActive = false;
+    } else {
+      bossPhaseCount   = 0;
+      bossPhaseIndex   = 0;
+      monsterShieldMax = 0;
+      monsterShield    = 0;
+      phaseShiftActive = false;
+    }
+
     if (damageBuffer > 0) {
       monsterHP = Math.max(1, monsterHP - damageBuffer);
       damageBuffer = 0;
@@ -1509,19 +1959,27 @@
     const nameEl  = document.getElementById("monster-name");
     const fillEl  = document.getElementById("hp-fill");
 
+    const isMegaBoss = isBoss && floor % 10 === 0;
+
     emojiEl.textContent = base.icon;
-    nameEl.textContent  = isBoss ? "👑 " + base.name : base.name;
+    emojiEl.classList.remove("phase-shifting");
+    document.getElementById("shield-bar-wrap").classList.remove("breaking");
+    nameEl.textContent  = isBoss ? (isMegaBoss ? "👑👑 " : "👑 ") + base.name : base.name;
     nameEl.className    = "monster-name" + (isBoss ? " boss-name" : "");
 
     document.getElementById("floor-label").textContent  = "Floor " + floor;
-    document.getElementById("boss-badge").style.display = isBoss ? "inline" : "none";
+    const badgeEl = document.getElementById("boss-badge");
+    badgeEl.style.display = isBoss ? "inline" : "none";
+    badgeEl.textContent   = isMegaBoss ? "👑 MEGA BOSS" : "⚡ BOSS";
+    badgeEl.classList.toggle("mega-badge", isMegaBoss);
 
     if (isBoss) {
       emojiEl.classList.add("boss-monster");
+      emojiEl.classList.toggle("mega-boss-monster", isMegaBoss);
       fillEl.classList.add("boss-hp");
       spawnOverlay("boss-flash-overlay", 700);
     } else {
-      emojiEl.classList.remove("boss-monster");
+      emojiEl.classList.remove("boss-monster", "mega-boss-monster");
       fillEl.classList.remove("boss-hp");
     }
 
@@ -1532,7 +1990,7 @@
 
     updateHPBar();
     updateAscendSection();
-    updateUnitVisibility();
+    renderUnits();
   }
 
   // ─────────────────────────────────────
@@ -1571,7 +2029,7 @@
 
     document.getElementById("loot-item-icon").textContent   = item.icon;
     document.getElementById("loot-item-name").innerHTML     = `<span class="rarity-${item.rarity}">${item.name}</span>`;
-    document.getElementById("loot-item-slot").textContent   = item.slot.toUpperCase();
+    document.getElementById("loot-item-slot").textContent   = item.slot === "ring" ? "JEWELRY" : item.slot.toUpperCase();
     document.getElementById("loot-item-flavor").textContent = item.flavor;
     document.getElementById("loot-item-bonus").textContent  = newBonus;
 
@@ -1636,6 +2094,7 @@
       if (c.type === "kills"   && totalKills        >= c.value) met = true;
       if (c.type === "gold"    && totalGoldEarned   >= c.value) met = true;
       if (c.type === "bosses"  && bossKills         >= c.value) met = true;
+      if (c.type === "heroLevels" && totalHeroLevels() >= c.value) met = true;
       if (met) {
         h.unlocked = true;
         anyNew = true;
@@ -1664,6 +2123,7 @@
     renderUnitCosts();
     playBuySound();
     showToast("⬆️ " + h.name + " leveled up!", "Now level " + h.level + "/10.");
+    checkHeroUnlocks();
     saveGame();
   }
 
@@ -1671,12 +2131,56 @@
   // Core game
   // ─────────────────────────────────────
 
-  function dealDamage(amount) {
-    if (monsterDead) return;
+  function triggerPhaseShift() {
+    phaseShiftActive = true;
+    monsterShield    = monsterShieldMax; // shield reforms on every phase boundary
+    phaseShiftsTriggered += 1;
+    checkAchievements();
+    updateHPBar();
+
+    const emojiEl = document.getElementById("monster-emoji");
+    emojiEl.classList.remove("phase-shifting"); void emojiEl.offsetWidth; emojiEl.classList.add("phase-shifting");
+    shakeScreen();
+    showToast("⚡ Phase Shift!", "The boss reinforces its shield. Keep clicking!");
+
+    setTimeout(() => {
+      phaseShiftActive = false;
+      emojiEl.classList.remove("phase-shifting");
+    }, 1500);
+  }
+
+  const PASSIVE_SHIELD_EFFICIENCY = 0.15; // idle DPS still chips shields, just much slower than clicking
+
+  function dealDamage(amount, isClick) {
+    if (monsterDead || phaseShiftActive) return;
+
+    if (monsterShield > 0) {
+      const shieldDmg = isClick ? amount : amount * PASSIVE_SHIELD_EFFICIENCY;
+      const absorbed  = Math.min(monsterShield, shieldDmg);
+      monsterShield  -= absorbed;
+      amount = isClick ? amount - absorbed : 0; // passive damage never bleeds through to HP while shielded
+      if (monsterShield <= 0) {
+        const wrap = document.getElementById("shield-bar-wrap");
+        wrap.classList.remove("breaking"); void wrap.offsetWidth; wrap.classList.add("breaking");
+        showToast("🛡️ Shield Broken!", "Full damage now applies.");
+        shieldsBroken += 1;
+        checkAchievements();
+      }
+      if (amount <= 0) { flashMonster(); updateHPBar(); return; }
+    }
+
     monsterHP -= amount;
     if (monsterHP < 0) monsterHP = 0;
     flashMonster();
     updateHPBar();
+
+    if (bossPhaseCount > 0 && bossPhaseIndex < bossPhaseCount - 1 && monsterHP > 0) {
+      const phaseThreshold = monsterMaxHP * (1 - (bossPhaseIndex + 1) / bossPhaseCount);
+      if (monsterHP <= phaseThreshold) {
+        bossPhaseIndex += 1;
+        triggerPhaseShift();
+      }
+    }
 
     if (monsterHP <= 0) {
       monsterDead = true;
@@ -1731,12 +2235,9 @@
     playClickSound();
     triggerLunge();
 
-    const gorak      = heroes.find(h => h.id === "gorak");
-    const critChance = gorak && gorak.unlocked
-      ? (gorak.bonus.critChance || 0) + (gorak.levelBonus?.critChance || 0) * gorak.level
-      : 0;
-    const isCrit  = Math.random() < critChance;
-    const critMult= gorak && gorak.unlocked ? (gorak.bonus.critMult || 1) : 1;
+    const critChance = getTotalMult("critChance");
+    const isCrit     = Math.random() < critChance;
+    const critMult   = 1 + getTotalMult("critMult"); // additive stacking: Gorak (10x) + Lucky Draught (5x) + weapon tiers
 
     const base = Math.floor(clickDamage * (1 + getTotalMult("clickMult")));
     const dmg  = isCrit ? base * critMult : base;
@@ -1763,16 +2264,25 @@
       }
     }
 
-    dealDamage(dmg);
+    dealDamage(dmg, true);
     checkAchievements();
+  }
+
+  function findWeaponTier(id) {
+    const pathId = selectedWeaponPath || "brute"; // before a path is chosen, only the shared starter sword (tier 0) is buyable
+    return weaponPaths[pathId].tiers.find(t => t.id === id);
   }
 
   function buyUpgrade(id) {
     if (weaponsBought[id]) return;
-    const w = weapons[id];
-    if (gold < w.cost) { document.getElementById("shop-msg").textContent = "Not enough gold!"; return; }
-    gold -= w.cost;
-    clickDamage += w.bonus;
+    const tier = findWeaponTier(id);
+    if (!tier) return;
+    if (gold < tier.cost) { document.getElementById("shop-msg").textContent = "Not enough gold!"; return; }
+    gold -= tier.cost;
+    clickDamage += tier.clickBonus;
+    weaponBonus.critChance += tier.critChance || 0;
+    weaponBonus.critMult   += tier.critMult   || 0;
+    weaponBonus.dpsMult    += tier.dpsMult    || 0;
     weaponsBought[id] = true;
     updateGold();
     renderStats();
@@ -1790,12 +2300,11 @@
     recalcPassive();
     updateGold();
     renderStats();
-    const countEl = document.getElementById("count-" + id);
-    if (countEl) countEl.textContent = "owned: " + units[id].count;
     document.getElementById("shop-msg").textContent = "";
-    renderUnitCosts();
+    renderUnits();
     playBuySound();
     checkAchievements();
+    saveGame();
   }
 
   function buyShardUpgrade(index) {
@@ -1843,7 +2352,9 @@
     clickDamage   = 10;
     currentFloor  = 1;
     monsterDead   = false;
-    weaponsBought = { sword: false, gloves: false, axe: false, bow: false, tome: false, stormstrike: false, shadowreaper: false, deathscythe: false };
+    weaponsBought      = {};
+    selectedWeaponPath = null;
+    potionsBought = {};
     for (const k in units) units[k].count = 0;
     recalcPassive();
 
@@ -1853,7 +2364,7 @@
 
     updateGold();
     renderStats();
-    for (const k in units) { const el = document.getElementById("count-" + k); if (el) el.textContent = "owned: 0"; }
+    renderUnits();
     updateShardDisplay();
     renderShardUpgrades();
 
@@ -1862,6 +2373,7 @@
     applyRunBonuses();
     checkHeroUnlocks();
     updateWeaponButtons();
+    renderPotionShop();
 
     checkAchievements();
     saveGame();
@@ -1879,9 +2391,9 @@
     if (freeSquire.owned > 0) {
       units.squire.count += freeSquire.owned;
       recalcPassive();
-      document.getElementById("count-squire").textContent = "owned: " + units.squire.count;
     }
     renderStats();
+    renderUnits();
   }
 
   // ─────────────────────────────────────
@@ -1893,12 +2405,21 @@
     for (const a of achievements) {
       if (!a.unlocked && a.check()) {
         a.unlocked = true;
-        showToast("🏆 " + a.name, a.desc);
-        playAchievementSound();
         anyNew = true;
+        if (a.reward > 0) {
+          const earned = applyGoldMult(a.reward);
+          gold += earned; totalGoldEarned += earned;
+          updateGold(); flashGold();
+          showToast("🏆 " + a.name, a.desc + " — +" + formatNum(earned) + "g");
+        } else {
+          showToast("🏆 " + a.name, a.desc);
+        }
+        playAchievementSound();
       }
     }
-    if (anyNew) { renderAchievements(); updateAchCount(); saveGame(); }
+    if (anyNew) {
+      renderAchievements(); updateAchCount(); renderStats(); renderUnits(); saveGame();
+    }
   }
 
   function showToast(title, desc) {
@@ -1934,11 +2455,19 @@
     s.setItem("shardsSpent",       shardsSpent);
     s.setItem("muted",             muted ? "1" : "0");
     s.setItem("unitCounts",        JSON.stringify(Object.fromEntries(Object.keys(units).map(k => [k, units[k].count]))));
+    s.setItem("unitMastery",       JSON.stringify(Object.fromEntries(Object.keys(units).map(k => [k, units[k].mastery]))));
     s.setItem("weaponsBought",     JSON.stringify(weaponsBought));
+    s.setItem("selectedWeaponPath",selectedWeaponPath || "");
+    s.setItem("weaponBonus",       JSON.stringify(weaponBonus));
     s.setItem("shardUpgrades",     JSON.stringify(shardShop.map(u => u.owned)));
     s.setItem("achievements",      JSON.stringify(achievements.map(a => a.unlocked)));
     s.setItem("equipped",          JSON.stringify({ weapon: equipped.weapon?.id || null, armor: equipped.armor?.id || null, ring: equipped.ring?.id || null }));
     s.setItem("heroData",          JSON.stringify(heroes.map(h => ({ unlocked: h.unlocked, level: h.level }))));
+    s.setItem("activeBuffs",       JSON.stringify(activeBuffs));
+    s.setItem("potionsBought",     JSON.stringify(potionsBought));
+    s.setItem("totalPotionsBought",totalPotionsBought);
+    s.setItem("shieldsBroken",     shieldsBroken);
+    s.setItem("phaseShiftsTriggered", phaseShiftsTriggered);
   }
 
   function loadGame() {
@@ -1965,15 +2494,24 @@
     if (n(s.getItem("shardBalance"))        !== null) shardBalance     = n(s.getItem("shardBalance"));
     if (n(s.getItem("totalShardsEarned"))   !== null) totalShardsEarned= n(s.getItem("totalShardsEarned"));
     if (n(s.getItem("shardsSpent"))         !== null) shardsSpent      = n(s.getItem("shardsSpent"));
+    if (n(s.getItem("totalPotionsBought"))  !== null) totalPotionsBought = n(s.getItem("totalPotionsBought"));
+    if (n(s.getItem("shieldsBroken"))       !== null) shieldsBroken      = n(s.getItem("shieldsBroken"));
+    if (n(s.getItem("phaseShiftsTriggered"))!== null) phaseShiftsTriggered = n(s.getItem("phaseShiftsTriggered"));
 
     muted = s.getItem("muted") === "1";
     document.getElementById("mute-btn").textContent = muted ? "🔇" : "🔊";
 
     const uc = j("unitCounts");
     if (uc) for (const k in uc) units[k].count = uc[k];
+    const um = j("unitMastery");
+    if (um) for (const k in um) units[k].mastery = um[k];
 
     const wb = j("weaponsBought");
     if (wb) weaponsBought = wb;
+    const swp = s.getItem("selectedWeaponPath");
+    if (swp) selectedWeaponPath = swp;
+    const wbo = j("weaponBonus");
+    if (wbo) weaponBonus = wbo;
 
     const su = j("shardUpgrades");
     if (su) su.forEach((owned, i) => { if (shardShop[i]) shardShop[i].owned = owned; });
@@ -1992,6 +2530,12 @@
     // Load hero data (persists through prestige)
     const hd = j("heroData");
     if (hd) hd.forEach((d, i) => { if (heroes[i]) { heroes[i].unlocked = d.unlocked; heroes[i].level = d.level; } });
+
+    const savedBuffs = j("activeBuffs");
+    if (savedBuffs) activeBuffs = savedBuffs;
+    const savedPotionsBought = j("potionsBought");
+    if (savedPotionsBought) potionsBought = savedPotionsBought;
+    pruneExpiredBuffs();
 
     recalcPassive();
 
@@ -2024,10 +2568,9 @@
 
     updateGold();
     renderStats();
-    for (const k in units) { const el = document.getElementById("count-" + k); if (el) el.textContent = "owned: " + units[k].count; }
     updateShardDisplay();
     renderShardUpgrades();
-    renderUnitCosts();
+    renderUnits();
     renderAchievements();
     updateAchCount();
     renderEquipment();
@@ -2035,7 +2578,8 @@
     checkHeroUnlocks();
     updatePrestigeBadge();
     updateWeaponButtons();
-    updateUnitVisibility();
+    renderActiveBuffs();
+    renderPotionShop();
   }
 
   // ─────────────────────────────────────
@@ -2047,6 +2591,18 @@
       const eff = Math.floor(passiveDamage * (1 + getTotalMult("dpsMult")));
       if (monsterDead) { damageBuffer += eff; }
       else { spawnPassiveFloats(); dealDamage(eff); }
+    }
+
+    const autoClicks = getAutoClickRate();
+    if (autoClicks > 0 && !monsterDead) {
+      for (let i = 0; i < autoClicks; i++) attack(null);
+    }
+
+    if (activeBuffs.length) {
+      const expired = pruneExpiredBuffs();
+      const potionTab = document.getElementById("tab-potions");
+      if (potionTab && potionTab.style.display !== "none") renderActiveBuffs();
+      if (expired) { renderStats(); renderUnitCosts(); }
     }
   }, 1000);
 
