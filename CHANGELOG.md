@@ -18,6 +18,34 @@ When you bump the version, update the number in package.json and add an entry be
 
 ---
 
+## [1.3.0] — 2026-06-25
+
+### Added
+- Potion shop: 5 timed buffs (Gold Rush, Berserker's Brew, Swiftness Tonic, Lucky Draught, Frenzy Vial), stack duration not magnitude
+- Boss shields and multi-phase HP bars — shields render as a glowing frame around the HP bar (no layout shift); idle/passive DPS chips shields at 15% efficiency so idle players never hard-stall
+- Mega-boss tier (every 10th floor) with distinct visuals and badge
+- 3 new synergy heroes: Brother Aldric (attack-speed aura), Mortis the Necromancer (scales with other heroes' levels), Lutessa the Bard (scales with roster size)
+- Branching weapon paths — Brute (flat damage), Duelist (crit chance/damage), Channeler (passive DPS) fork after a shared starter sword; path choice locks until next Ascend
+- Dragoon (floor 50) and Titan (floor 80) units
+- Per-unit Mastery: infinitely repeatable gold sink, +4% damage per level per unit, persists through Ascend
+- Achievement gold rewards on every unlock, scaled to difficulty (20g – 350,000g)
+- Achievement Power: permanent +0.5% gold and DPS per achievement unlocked, never resets — shown live in the Achievements tab
+- "Master Trainer" achievement (mastery level 10 on any unit)
+- Temporary dev-tools panel (Achievements tab) for manual gold/shard grants during testing — flagged for removal before shipping
+
+### Changed
+- Paladin reworked from a shield-themed hero into an attack-speed aura (⚜️) — the old shield flavor clashed with the new boss-shield mechanic
+- Crit chance/damage now routed through the same multiplier pipeline as all other bonuses — fixes Lucky Draught's crit effect, which was previously silently inert
+- Units shop converted to dynamic rendering (was 7 hardcoded buttons) to support per-unit Mastery rows and floor-gated visibility in one place
+- Ring equipment slot renamed to "Jewelry" in all UI text
+- Achievements tab counter is now dynamic instead of a hardcoded "/50" label
+
+### Fixed
+- Sitewide low-contrast dark-gray text (~20 instances) replaced with readable colors across Shop, Heroes, Gear, Potions, Prestige and Achievements tabs
+- Locked achievement requirement text was unreadable (inherited a 0.4 opacity on top of already-muted gray) — now uses the same readable green as other bonus text
+
+---
+
 ## [1.2.0] — 2026-05-31
 
 ### Changed
