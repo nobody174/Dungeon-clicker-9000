@@ -83,6 +83,11 @@ jobs:
       - name: Build game
         run: npm run build || echo "No build step found"
 
+      - name: Prepare itch.io build folder
+        run: |
+          mkdir -p itch-build
+          cp index.html itch-build/
+
       - name: Install Butler
         run: |
           curl -L -o butler.zip https://broth.itch.zone/butler/linux-amd64/LATEST/archive/default
@@ -94,4 +99,4 @@ jobs:
         env:
           BUTLER_API_KEY: ${{ secrets.BUTLER_API_KEY }}
         run: |
-          butler push . ${{ secrets.ITCH_USER }}/${{ secrets.ITCH_GAME }}:html
+          butler push itch-build ${{ secrets.ITCH_USER }}/${{ secrets.ITCH_GAME }}:html
