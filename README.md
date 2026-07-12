@@ -47,7 +47,7 @@ Built from scratch in vanilla HTML, CSS and JavaScript as a learning project.
 
 ## 🛠️ Tech Stack
 
-- Vanilla HTML, CSS and JavaScript — single file, zero dependencies
+- Vanilla HTML, CSS and JavaScript — ES modules, zero dependencies, no build tooling
 - Web Audio API for procedurally generated sound effects
 - localStorage for save/load
 - GitHub Pages for hosting
@@ -56,12 +56,18 @@ Built from scratch in vanilla HTML, CSS and JavaScript as a learning project.
 
 ## 🚀 Running Locally
 
-No build step needed. Just open `index.html` in any browser.
+No build step needed, but the game must be served over HTTP — it uses ES modules
+(`<script type="module">`), which browsers block from loading via `file://`. Use the
+included dev server:
 
 ```bash
 git clone https://github.com/nobody174/dungeon-clicker-9000.git
-open dungeon-clicker-9000/index.html
+cd dungeon-clicker-9000
+npm install
+npm run serve
 ```
+
+Then open http://localhost:3000 in your browser.
 
 ---
 
@@ -69,7 +75,26 @@ open dungeon-clicker-9000/index.html
 
 ```
 dungeon-clicker-9000/
-└── index.html    # The entire game — HTML, CSS and JS in one file
+├── index.html         # HTML shell + inline <style> CSS + <script type="module" src="js/main.js">
+└── js/
+    ├── main.js         # Entry point: wires up modules, exposes onclick-handler functions, starts game loops
+    ├── state.js         # Shared mutable game state
+    ├── stats.js          # Cross-cutting stat math (getTotalMult, gold/DPS formulas)
+    ├── utils.js           # Pure formatting helpers
+    ├── heroes.js           # Hero roster, unlocks, level-up
+    ├── equipment.js         # Gear table, loot rolls, equip/discard
+    ├── combat.js             # Attack / damage core loop
+    ├── monsters.js            # Monster roster, spawning
+    ├── bosses.js               # Boss phase-shift mechanic
+    ├── weapons.js               # Weapon paths and tier upgrades
+    ├── units.js                  # Units + Mastery
+    ├── prestige.js                 # Soul Shard shop + Ascend
+    ├── potions.js                   # Potion shop + active buffs
+    ├── achievements.js                # Achievement list + checks
+    ├── audio.js                        # Procedural sound effects
+    ├── ui.js                             # DOM render/update/tab functions
+    ├── toast.js                           # Toast notifications
+    └── save.js                             # Save/load (localStorage)
 ```
 
 ---

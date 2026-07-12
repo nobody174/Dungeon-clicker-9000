@@ -18,6 +18,26 @@ When you bump the version, update the number in package.json and add an entry be
 
 ---
 
+## [Unreleased]
+
+### Changed
+- Migrated the single-file `index.html` inline script (~1,720 lines, 84 functions, 55 shared globals) into ES modules under `js/` — no build step, no bundler. CSS stays inline in `index.html`. Prerequisite for the feature batch below; also fixes the itch.io deploy workflow, which previously only copied `index.html` and would have silently shipped a JS-less build once the split landed.
+- Added a Playwright smoke-test suite (`tests/smoke.spec.js`) as the regression harness for the module migration and the features below.
+
+### Added
+- Offline-progress duration upgrades: finite `offlineCap` shard-shop tier ladder (+12h/level, 4 levels, 8h→56h) plus a one-time "Offline Mastery" capstone (+24h flat, +25% offline gains) — `js/prestige.js`; offline-earnings calc in `js/save.js` now reads `getOfflineCapSeconds()`/`getOfflineGainMult()` instead of the old hard-coded 8-hour cap
+- Mastery Milestones: cosmetic Bronze/Silver/Gold/Aura badges at mastery 5/10/25/50 on each unit's Mastery row, plus a one-time unlock toast — `js/units.js`. No new save state; tier is fully derived from the existing `mastery` integer.
+- Tiered monster visual identity: floors past 10 now get a distinct name/icon per 10-floor tier (Feral/Acid/Shadow/Frozen/Infernal/Voidtouched/Ascendant prefixes) instead of recycling the same 10 names forever — `js/monsters.js`'s new `getMonsterIdentity()` accessor, consolidating 3 previously-duplicated floor→monster lookups into one.
+- Boss Combat v1: player HP bar (4 HP, refills each boss fight) and a dodge mechanic exclusive to boss floors — a windup telegraph precedes each boss attack, dodge (button or `D` key) negates it, missing costs 1 HP and a small gold penalty. Idle/away players auto-resolve as dodged so offline progression is never penalized. New isolated module `js/bossCombat.js`, decoupled from the offline/passive-DPS math.
+- Equipment set bonuses: 3 named sets (Voidreaver's Fury, Hoarder's Fortune, Warden's Resolve) granting a bonus when all pieces are equipped — `js/equipment.js`. Also fixes a pre-existing bug where a set-completing drop could be silently auto-salvaged for having a lower raw stat score than the equipped item.
+- Path of the Reaper: 4th weapon path, selectable only after the player's first Ascend, with an execute mechanic (bonus damage below 20% monster HP) and life-steal tiers that heal player HP during boss fights — `js/weapons.js`.
+- Hero Trials: one cosmetic-reward objective per hero (8 total), shown on each hero's card in the Heroes tab — `js/heroes.js`. No power rewards, titles/badges only.
+- Boss Trophy Room: new tab logging first-kill floor and total-defeats-as-boss per monster tier, keyed off the tiered-identity system above — `js/trophies.js`.
+- Daily Challenge Run: a fixed-time (10 minute), seeded challenge mode isolated from the main save — new `js/prng.js` (seedable PRNG for crit/loot rolls only) and `js/challenge.js`. Score-only, no permanent-currency rewards, no progression carry-over from the main save.
+- Void Fragments: a second prestige currency ("Run Rules," distinct from Soul Shards' "Power" framing), unlocked at `prestigeCount >= 5`, spent on starting-run modifiers and a capped risk/reward difficulty slider — `js/voidFragments.js`.
+
+---
+
 ## [1.3.0] — 2026-06-25
 
 ### Added
