@@ -43,6 +43,13 @@ When you bump the version, update the number in package.json and add an entry be
 
 ---
 
+## [1.4.1] — 2026-07-13
+
+### Fixed
+- Dev Tools tab shipped to the live GitHub Pages and itch.io builds in the 1.4.0 release, exposing gold/floor/prestige cheat buttons to real players. Gated the tab button and `window.dev*` bindings behind a localhost hostname check — `js/main.js`, `index.html` — so the tab still works for local `npm run serve` testing but is never present (or callable) on real deploy targets.
+
+---
+
 ## [1.3.0] — 2026-06-25
 
 ### Added
