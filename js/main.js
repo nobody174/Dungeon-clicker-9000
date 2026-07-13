@@ -55,12 +55,25 @@ window.exitChallengeEarly = exitChallengeEarly;
 window.closeChallengeResult = closeChallengeResult;
 window.buyVoidUpgrade   = buyVoidUpgrade;
 window.setVoidRisk      = setVoidRiskLevel;
-window.devAddGold       = devAddGold;
-window.devSetFloor      = devSetFloor;
-window.devAddPrestige   = devAddPrestige;
-window.toggleDevOneShot = toggleDevOneShot;
-window.devMaxMastery    = devMaxMastery;
-window.devKillBoss      = devKillBoss;
+
+// ── Dev Tools — local testing only, never shipped to players ──
+// Gated on hostname rather than removed from the codebase so the tab keeps working during local
+// `npm run serve` testing. Real deploy targets (GitHub Pages, itch.io) are never localhost, so the
+// tab button stays hidden and the cheat functions are never exposed on `window` for those builds —
+// a player couldn't reach them from the console either, since they're only bound here.
+const isLocalDev = ["localhost", "127.0.0.1", ""].includes(location.hostname);
+if (isLocalDev) {
+  window.devAddGold       = devAddGold;
+  window.devSetFloor      = devSetFloor;
+  window.devAddPrestige   = devAddPrestige;
+  window.toggleDevOneShot = toggleDevOneShot;
+  window.devMaxMastery    = devMaxMastery;
+  window.devKillBoss      = devKillBoss;
+} else {
+  document.addEventListener("DOMContentLoaded", () => {
+    document.getElementById("dev-tab-btn")?.remove();
+  });
+}
 
 // ── Test-support hooks ──
 // tests/smoke.spec.js drives the game via page.evaluate() to set up scenarios (e.g. "give the player
