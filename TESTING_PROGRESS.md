@@ -84,6 +84,13 @@ resume from the cabin without re-deriving context.
 - **10. Mastery Milestones**: badge display confirmed good.
 - **General**: save/reload persistence confirmed working across a full
   session (gold, floor, gear, heroes, trials, trophies all survive).
+- **2. Boss Combat v1**: retested with one-shot dev tool OFF — windup
+  telegraph, dodge warning visual, and dodge itself all confirmed. Failing
+  to dodge (HP hits 0) correctly triggers the attack and gold-loss penalty.
+- **4. Path of the Reaper**: confirmed working end to end.
+- **Tier icon visuals**: reworked per player feedback — tier now recolors
+  the base creature icon in place (CSS filter + colored ring) instead of
+  appending a second decorator emoji. Confirmed looking better in testing.
 
 ## Confirmed working by design (not bugs)
 
@@ -98,26 +105,16 @@ resume from the cabin without re-deriving context.
 
 ## Still untested
 
-- **2. Boss Combat v1**: dodge timing/windup cue was tested with the
-  one-shot dev tool accidentally left on (bosses died in one hit before
-  any boss-attack timer could fire) — **needs a real retest** with normal
-  click damage (one-shot toggle OFF) to actually observe the windup →
-  dodge → hit/miss → HP loss → gold penalty flow end to end.
-- **4. Path of the Reaper**: not yet tested at all. Needs: confirm locked
-  before first Ascend, unlocks after; confirm execute-damage bonus below
-  20% monster HP; confirm life-steal procs during boss fights at higher
-  tiers.
-- **9. Offline Progression**: tested earlier in an earlier session pass,
-  not re-verified against the final build — low risk, low priority to
+- **9. Offline Progression**: tested in an earlier session pass, not
+  re-verified against the final build — low risk, low priority to
   re-check.
 
 ## Next steps (resume here from the cabin)
 
 1. Hard-refresh before starting (stale-cache gotcha above).
-2. Retest Boss Combat properly — one-shot toggle OFF, actually observe
-   a full boss fight with normal damage.
-3. Test Path of the Reaper end to end (needs an Ascend first).
-4. If both pass clean, this batch is fully tested and ready to consider
+2. Optionally re-verify Offline Progression against the final build
+   (low priority).
+3. Batch is otherwise fully tested and ready to consider
    shipping/tagging a version bump in `package.json` + finalizing the
    `CHANGELOG.md [Unreleased]` section into a real version number (left
    as a deliberate open decision — see CHANGELOG.md's own note).

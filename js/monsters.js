@@ -32,23 +32,24 @@ function spawnOverlay(cls, dur) {
 export const FLOOR_MILESTONES = [100, 200, 500, 1000, 2000, 5000, 10000];
 
 // ── Tiered monster visual identity (1a) ──
-// Every 10 floors (one full pass through `monsters`), each base monster gets a new name/icon
-// prefix so floor 55's "Slime" reads as something distinct from floor 5's, without introducing
-// any new mechanic (stats still scale via the existing `tier`/`scale` math elsewhere). Purely
-// derived from floor — no save state. Tiers past the table just keep re-using the last prefix
-// (tier is otherwise unbounded, so there's no natural "final" entry).
-// `iconDecorator` is always shown alongside the base creature's own icon (never replaces it) —
-// e.g. tier 4's "Frozen Dragon" renders as "🐲❄️", not a bare ice cube standing in for the dragon.
-// Player feedback: a tier icon that fully replaces the base icon loses the creature entirely.
+// Every 10 floors (one full pass through `monsters`), each base monster gets a new name prefix
+// so floor 55's "Slime" reads as something distinct from floor 5's, without introducing any new
+// mechanic (stats still scale via the existing `tier`/`scale` math elsewhere). Purely derived
+// from floor — no save state. Tiers past the table just keep re-using the last prefix (tier is
+// otherwise unbounded, so there's no natural "final" entry).
+// `cssClass` recolors the base creature's own icon in place (CSS filter + a tier-colored ring),
+// rather than appending a second decorator emoji next to it — player feedback was that a bolted-on
+// second icon (e.g. skeleton + a separate dark circle) didn't read as "this creature is dark," it
+// just looked like clutter. See .tier-icon rules in index.html for the actual filter/ring values.
 export const TIER_PREFIXES = [
-  { suffix: "",              iconDecorator: null },   // tier 0: floors 1-10, base name/icon
-  { suffix: "Feral ",        iconDecorator: "🔥" },   // tier 1: floors 11-20
-  { suffix: "Acid ",         iconDecorator: "🧪" },   // tier 2: floors 21-30
-  { suffix: "Shadow ",       iconDecorator: "🌑" },   // tier 3: floors 31-40
-  { suffix: "Frozen ",       iconDecorator: "❄️" },   // tier 4: floors 41-50
-  { suffix: "Infernal ",     iconDecorator: "🔥" },   // tier 5: floors 51-60
-  { suffix: "Voidtouched ",  iconDecorator: "🌀" },   // tier 6: floors 61-70
-  { suffix: "Ascendant ",    iconDecorator: "⭐" },   // tier 7+: floors 71+
+  { suffix: "",              cssClass: null },            // tier 0: floors 1-10, base name/icon
+  { suffix: "Feral ",        cssClass: "tier-feral" },     // tier 1: floors 11-20
+  { suffix: "Acid ",         cssClass: "tier-acid" },      // tier 2: floors 21-30
+  { suffix: "Shadow ",       cssClass: "tier-shadow" },    // tier 3: floors 31-40
+  { suffix: "Frozen ",       cssClass: "tier-frozen" },    // tier 4: floors 41-50
+  { suffix: "Infernal ",     cssClass: "tier-infernal" },  // tier 5: floors 51-60
+  { suffix: "Voidtouched ",  cssClass: "tier-void" },      // tier 6: floors 61-70
+  { suffix: "Ascendant ",    cssClass: "tier-ascendant" }, // tier 7+: floors 71+
 ];
 
 // Single shared accessor: resolves the tiered name/icon/stats for a given floor.
@@ -61,8 +62,9 @@ export function getMonsterIdentity(floor) {
   const scale = Math.pow(1.8, tier);
   const prefixTier = TIER_PREFIXES[Math.min(tier, TIER_PREFIXES.length - 1)];
   const name = prefixTier.suffix ? prefixTier.suffix + base.name : base.name;
-  const icon = prefixTier.iconDecorator ? base.icon + prefixTier.iconDecorator : base.icon;
-  return { name, icon, baseIndex, tier, scale, baseHP: base.hp, baseGold: base.gold };
+  const icon = base.icon;
+  const tierClass = prefixTier.cssClass;
+  return { name, icon, tierClass, baseIndex, tier, scale, baseHP: base.hp, baseGold: base.gold };
 }
 
 export function loadMonster(floor) {
@@ -107,7 +109,7 @@ export function loadMonster(floor) {
 
   const isMegaBoss = isBoss && floor % 10 === 0;
 
-  emojiEl.textContent = base.icon;
+  emojiEl.innerHTML = `<span class="tier-icon${identity.tierClass ? " " + identity.tierClass : ""}">${base.icon}</span>`;
   emojiEl.classList.remove("phase-shifting");
   document.getElementById("shield-bar-wrap").classList.remove("breaking");
   nameEl.textContent  = isBoss ? (isMegaBoss ? "👑👑 " : "👑 ") + base.name : base.name;
@@ -154,8 +156,7 @@ export function getTrophyGallery() {
     for (let i = 0; i < monsters.length; i++) {
       const base = monsters[i];
       const name = prefixTier.suffix ? prefixTier.suffix + base.name : base.name;
-      const icon = prefixTier.iconDecorator ? base.icon + prefixTier.iconDecorator : base.icon;
-      entries.push({ baseIndex: i, tier, name, icon, minFloor: tier * monsters.length + 1 });
+      entries.push({ baseIndex: i, tier, name, icon: base.icon, tierClass: prefixTier.cssClass, minFloor: tier * monsters.length + 1 });
     }
   }
   return entries;

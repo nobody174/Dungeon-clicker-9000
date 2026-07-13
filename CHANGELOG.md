@@ -18,11 +18,12 @@ When you bump the version, update the number in package.json and add an entry be
 
 ---
 
-## [Unreleased]
+## [1.4.0] — 2026-07-13
 
 ### Changed
 - Migrated the single-file `index.html` inline script (~1,720 lines, 84 functions, 55 shared globals) into ES modules under `js/` — no build step, no bundler. CSS stays inline in `index.html`. Prerequisite for the feature batch below; also fixes the itch.io deploy workflow, which previously only copied `index.html` and would have silently shipped a JS-less build once the split landed.
 - Added a Playwright smoke-test suite (`tests/smoke.spec.js`) as the regression harness for the module migration and the features below.
+- Tier icon visuals reworked per QA feedback: tier now recolors the base creature's own icon in place (CSS filter + a tier-colored ring) instead of appending a second decorator emoji beside it — `js/monsters.js`, `js/trophies.js`, `index.html`.
 
 ### Added
 - Offline-progress duration upgrades: finite `offlineCap` shard-shop tier ladder (+12h/level, 4 levels, 8h→56h) plus a one-time "Offline Mastery" capstone (+24h flat, +25% offline gains) — `js/prestige.js`; offline-earnings calc in `js/save.js` now reads `getOfflineCapSeconds()`/`getOfflineGainMult()` instead of the old hard-coded 8-hour cap
@@ -35,6 +36,10 @@ When you bump the version, update the number in package.json and add an entry be
 - Boss Trophy Room: new tab logging first-kill floor and total-defeats-as-boss per monster tier, keyed off the tiered-identity system above — `js/trophies.js`.
 - Daily Challenge Run: a fixed-time (10 minute), seeded challenge mode isolated from the main save — new `js/prng.js` (seedable PRNG for crit/loot rolls only) and `js/challenge.js`. Score-only, no permanent-currency rewards, no progression carry-over from the main save.
 - Void Fragments: a second prestige currency ("Run Rules," distinct from Soul Shards' "Power" framing), unlocked at `prestigeCount >= 5`, spent on starting-run modifiers and a capped risk/reward difficulty slider — `js/voidFragments.js`.
+
+---
+
+## [Unreleased]
 
 ---
 

@@ -32,7 +32,7 @@ export function renderTrophyRoom() {
     div.className = "trophy-card " + (defeated ? "trophy-unlocked" : "trophy-locked");
     if (defeated) {
       div.innerHTML = `
-        <span class="trophy-icon">${entry.icon}</span>
+        <span class="trophy-icon"><span class="tier-icon${entry.tierClass ? " " + entry.tierClass : ""}">${entry.icon}</span></span>
         <span class="trophy-info">
           <span class="trophy-name">${entry.name}</span>
           <span class="trophy-stats">First felled: Floor ${record.firstFloor} • Boss kills: ${record.kills}</span>
