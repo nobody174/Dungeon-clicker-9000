@@ -168,6 +168,18 @@ document.addEventListener("keydown", e => {
   if (e.code === "KeyD" && !e.repeat) { e.preventDefault(); markPlayerAction(); dodge(); }
 });
 
+// Safety net for hold-to-attack (startAttackHold/stopAttackHold in combat.js): the button's own
+// mouseup/mouseleave/touchend/touchcancel handlers only fire if the release event lands back on
+// that element. If the mouse button is released outside the browser window, or the tab loses
+// focus mid-hold (alt-tab, an OS/extension popup stealing focus — reported by a player using
+// Brave, whose shields UI can do this), neither fires, and the recursive setTimeout attack-repeat
+// chain in startAttackHold runs forever with nothing left to clear it — surfacing as "attacks keep
+// happening on their own" until the page is closed and reopened. These window-level listeners
+// catch every path that can end a hold, not just the ones that land back on the button itself.
+window.addEventListener("mouseup",   stopAttackHold);
+window.addEventListener("blur",      stopAttackHold);
+document.addEventListener("visibilitychange", () => { if (document.hidden) stopAttackHold(); });
+
 setInterval(renderPlayerHP, 250);
 
 loadGame();
