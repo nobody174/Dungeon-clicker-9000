@@ -1,8 +1,9 @@
 name: CI/CD — Test & Deploy
 
 on:
-  workflow_dispatch:
+  push:
     branches: [main]
+  workflow_dispatch:
 
 permissions:
   contents: read

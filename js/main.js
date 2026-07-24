@@ -12,7 +12,7 @@ import { startAttackHold, stopAttackHold, attack, spawnPassiveFloats, dealDamage
 import { openAscendModal, closeModal, doAscend } from "./prestige.js";
 import { equipLoot, discardLoot } from "./equipment.js";
 import { levelUpHero } from "./heroes.js";
-import { saveGame, loadGame } from "./save.js";
+import { saveGame, loadGame, exportSaveString, importSaveString } from "./save.js";
 import { renderActiveBuffs } from "./potions.js";
 import { loadMonster } from "./monsters.js";
 import { updateGold } from "./ui.js";
@@ -20,6 +20,50 @@ import { dodge, markPlayerAction, renderPlayerHP } from "./bossCombat.js";
 import { startChallenge, endChallenge, exitChallengeEarly, closeChallengeResult, isChallengeRunning } from "./challenge.js";
 import { buyVoidUpgrade, setVoidRiskLevel } from "./voidFragments.js";
 import { devAddGold, devSetFloor, devAddPrestige, devSetClickDamage, devRestoreClickDamage, isDevOneShotActive, devMaxMastery, devKillBoss } from "./dev.js";
+import { GAME_VERSION } from "./version.js";
+import { showToast } from "./toast.js";
+
+document.getElementById("version-tag").textContent = "v" + GAME_VERSION;
+
+// ── Export / Import Save UI glue (BACKLOG.md #11) ──
+function openExportModal() {
+  document.getElementById("export-save-text").value = exportSaveString();
+  document.getElementById("export-copy-msg").textContent = "";
+  document.getElementById("export-modal").style.display = "flex";
+}
+function closeExportModal() {
+  document.getElementById("export-modal").style.display = "none";
+}
+function copyExportSave() {
+  const text = document.getElementById("export-save-text");
+  text.select();
+  navigator.clipboard?.writeText(text.value)
+    .then(() => { document.getElementById("export-copy-msg").textContent = "Copied!"; })
+    .catch(() => { document.getElementById("export-copy-msg").textContent = "Couldn't copy automatically — select the text above and copy manually."; });
+}
+function openImportModal() {
+  document.getElementById("import-save-text").value = "";
+  document.getElementById("import-error-msg").textContent = "";
+  document.getElementById("import-modal").style.display = "flex";
+}
+function closeImportModal() {
+  document.getElementById("import-modal").style.display = "none";
+}
+function confirmImportSave() {
+  const code = document.getElementById("import-save-text").value;
+  if (!code.trim()) {
+    document.getElementById("import-error-msg").textContent = "Paste a save code first.";
+    return;
+  }
+  if (!confirm("This will overwrite your current progress on this browser. Continue?")) return;
+  const error = importSaveString(code);
+  if (error) {
+    document.getElementById("import-error-msg").textContent = error;
+    return;
+  }
+  closeImportModal();
+  showToast("📥 Save Imported", "Your progress has been restored.");
+}
 
 function toggleDevOneShot() {
   const btn = document.getElementById("dev-oneshot-btn");
@@ -55,6 +99,12 @@ window.exitChallengeEarly = exitChallengeEarly;
 window.closeChallengeResult = closeChallengeResult;
 window.buyVoidUpgrade   = buyVoidUpgrade;
 window.setVoidRisk      = setVoidRiskLevel;
+window.openExportModal  = openExportModal;
+window.closeExportModal = closeExportModal;
+window.copyExportSave   = copyExportSave;
+window.openImportModal  = openImportModal;
+window.closeImportModal = closeImportModal;
+window.confirmImportSave = confirmImportSave;
 
 // ── Dev Tools — local testing only, never shipped to players ──
 // Gated on hostname rather than removed from the codebase so the tab keeps working during local

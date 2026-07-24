@@ -9,18 +9,32 @@ import { applyGoldMult } from "./stats.js";
 import { renderStats, updateGold, flashGold } from "./ui.js";
 import { renderUnitCosts } from "./units.js";
 
-// ── Equipment (10 items) ──
+// ── Equipment (19 items) ──
+// BACKLOG.md #12: item variety expansion within the existing 3-slot/3-rarity system (no new
+// slots/rarities — that's the deferred ITEMIZATION_REDESIGN.md scope). Each new item is a
+// distinct stat *shape*, not a straight power-up of an existing one at the same rarity, so
+// hasDifferentStatShape()'s "different shape beats pure salvage" logic actually surfaces them
+// instead of them being auto-salvaged as sidegrades.
 export const equipment = [
   { id:"rusted_blade",   slot:"weapon", rarity:"common",    name:"Rusted Blade",      icon:"🗡️",  flavor:"A forgotten soldier's last companion.",          bonus:{ clickMult:0.10 }, salvageValue:100 },
   { id:"bloodaxe",       slot:"weapon", rarity:"rare",      name:"Bloodstained Axe",  icon:"🪓",  flavor:"Still warm from its last kill.",                 bonus:{ clickMult:0.25 }, salvageValue:500 },
   { id:"voidreaver",     slot:"weapon", rarity:"legendary", name:"Voidreaver",         icon:"⚔️",  flavor:"It hungers for souls.",                          bonus:{ clickMult:0.50 }, minFloor:15, salvageValue:2500 },
+  { id:"quickblade",     slot:"weapon", rarity:"common",    name:"Quickblade",         icon:"🔪",  flavor:"Light enough to swing twice as fast.",           bonus:{ attackSpeedMult:0.06 }, salvageValue:100 },
+  { id:"headsman_axe",   slot:"weapon", rarity:"rare",      name:"Headsman's Axe",     icon:"🪃",  flavor:"Reserved for the finishing blow.",               bonus:{ critChance:0.06, critMult:1.5 }, salvageValue:500 },
+  { id:"chronoblade",    slot:"weapon", rarity:"legendary", name:"Chronoblade",        icon:"⏳",  flavor:"Every swing arrives before you finish it.",      bonus:{ attackSpeedMult:0.14, clickMult:0.15 }, minFloor:15, salvageValue:2500 },
   { id:"leather_vest",   slot:"armor",  rarity:"common",    name:"Leather Vest",       icon:"🥋",  flavor:"Worn but reliable.",                             bonus:{ goldMult:0.10 }, salvageValue:100 },
   { id:"shadow_cloak",   slot:"armor",  rarity:"rare",      name:"Shadow Cloak",       icon:"🧥",  flavor:"Darkness clings to it like a second skin.",      bonus:{ goldMult:0.20 }, salvageValue:500 },
   { id:"dragonscale",    slot:"armor",  rarity:"rare",      name:"Dragonscale Mail",   icon:"🐉",  flavor:"Scales of a slain dragon, forged into armor.",   bonus:{ dpsMult:0.15 }, minFloor:10, salvageValue:500 },
   { id:"void_plate",     slot:"armor",  rarity:"legendary", name:"Void Plate",         icon:"🛡️",  flavor:"Heavier than regret.",                           bonus:{ dpsMult:0.30 }, minFloor:20, salvageValue:2500 },
+  { id:"recruit_tunic",  slot:"armor",  rarity:"common",    name:"Recruit's Tunic",    icon:"🎽",  flavor:"Standard-issue, unremarkable, gets the job done.", bonus:{ unitDiscount:0.05 }, salvageValue:100 },
+  { id:"warlord_plate",  slot:"armor",  rarity:"rare",      name:"Warlord's Plate",    icon:"🪖",  flavor:"Command radiates from every dent in this armor.", bonus:{ unitDiscount:0.10, dpsMult:0.08 }, minFloor:10, salvageValue:500 },
+  { id:"aegis_of_ages",  slot:"armor",  rarity:"legendary", name:"Aegis of Ages",      icon:"🌌",  flavor:"It has outlasted every army that ever wore it.", bonus:{ unitDiscount:0.15, dpsMult:0.15 }, minFloor:20, salvageValue:2500 },
   { id:"copper_band",    slot:"ring",   rarity:"common",    name:"Copper Band",        icon:"💍",  flavor:"Simple but effective.",                          bonus:{ goldMult:0.05 }, salvageValue:100 },
   { id:"ring_avarice",   slot:"ring",   rarity:"rare",      name:"Ring of Avarice",    icon:"💍",  flavor:"Greed made manifest.",                           bonus:{ goldMult:0.20 }, minFloor:10, salvageValue:500 },
   { id:"soulstone_ring", slot:"ring",   rarity:"legendary", name:"Soulstone Ring",     icon:"💎",  flavor:"Pulsing with trapped souls.",                    bonus:{ clickMult:0.15, goldMult:0.15 }, minFloor:25, salvageValue:2500 },
+  { id:"hunters_signet", slot:"ring",   rarity:"common",    name:"Hunter's Signet",    icon:"🔸",  flavor:"Marked with a tally of small kills.",            bonus:{ critChance:0.04 }, salvageValue:100 },
+  { id:"band_of_tempo",  slot:"ring",   rarity:"rare",      name:"Band of Tempo",      icon:"🔶",  flavor:"Ticks along with your own heartbeat.",           bonus:{ attackSpeedMult:0.08 }, minFloor:10, salvageValue:500 },
+  { id:"ring_of_ruin",   slot:"ring",   rarity:"legendary", name:"Ring of Ruin",       icon:"🌀",  flavor:"Worn by a king who conquered and kept nothing.", bonus:{ critChance:0.10, critMult:1.8 }, minFloor:25, salvageValue:2500 },
 ];
 
 // ── Equipment Set Bonuses ──
@@ -46,6 +60,12 @@ export const equipmentSets = [
     itemIds: ["dragonscale", "leather_vest", "copper_band"],
     bonus: { missGoldPenaltyReduction: 0.5 },
     desc: "-50% gold penalty from missed boss dodges",
+  },
+  {
+    id: "swiftblade_set", name: "Swiftblade Zeal", icon: "⚡",
+    itemIds: ["headsman_axe", "warlord_plate", "band_of_tempo"],
+    bonus: { attackSpeedMult: 0.10, critChance: 0.05 },
+    desc: "+10% attack speed, +5% crit chance",
   },
 ];
 

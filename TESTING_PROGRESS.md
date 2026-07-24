@@ -109,12 +109,12 @@ resume from the cabin without re-deriving context.
   re-verified against the final build — low risk, low priority to
   re-check.
 
-## Next steps (resume here from the cabin)
+## Next steps
 
 1. Hard-refresh before starting (stale-cache gotcha above).
 2. Optionally re-verify Offline Progression against the final build
    (low priority).
-3. Batch is otherwise fully tested and ready to consider
-   shipping/tagging a version bump in `package.json` + finalizing the
-   `CHANGELOG.md [Unreleased]` section into a real version number (left
-   as a deliberate open decision — see CHANGELOG.md's own note).
+3. ~~Batch is otherwise fully tested and ready to consider
+   shipping/tagging a version bump~~ — done: shipped as v1.4.0/v1.4.1.
+   Since then, v1.5.0 shipped the item-variety batch (BACKLOG.md #12) —
+   see CHANGELOG.md.

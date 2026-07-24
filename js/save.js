@@ -63,6 +63,49 @@ export function loadGame() {
   try { _loadGame(); } catch(e) { console.warn("Save load failed, resetting:", e); localStorage.clear(); }
 }
 
+// ── Export / Import (BACKLOG.md #11) ──
+// Player-portable backup of the save, independent of browser/device localStorage. Deliberately
+// reuses every key saveGame() already writes (dumps the whole origin's localStorage) rather than
+// hand-listing fields a second time — a hand-maintained field list would silently go stale the
+// next time a feature adds a new save key, exactly the kind of drift BACKLOG.md #11 warned against.
+export function exportSaveString() {
+  saveGame(); // ensure what's exported reflects current state, not the last autosave tick
+  const dump = {};
+  for (let i = 0; i < localStorage.length; i++) {
+    const key = localStorage.key(i);
+    dump[key] = localStorage.getItem(key);
+  }
+  const json = JSON.stringify(dump);
+  // btoa can't handle non-Latin1 chars directly; encodeURIComponent/unescape round-trips any
+  // JSON string (item names/flavor text are plain ASCII today, but this stays correct if that changes).
+  return btoa(unescape(encodeURIComponent(json)));
+}
+
+// Returns null on success, or a user-facing error string on failure. Never partially applies a
+// bad import — validates the whole payload before touching real localStorage.
+export function importSaveString(encoded) {
+  let dump;
+  try {
+    const json = decodeURIComponent(escape(atob(encoded.trim())));
+    dump = JSON.parse(json);
+  } catch (e) {
+    return "That doesn't look like a valid save code.";
+  }
+  if (!dump || typeof dump !== "object" || Array.isArray(dump) || !("gold" in dump)) {
+    return "That doesn't look like a Dungeon Clicker 9000 save.";
+  }
+  localStorage.clear();
+  for (const key in dump) localStorage.setItem(key, dump[key]);
+  try {
+    _loadGame();
+  } catch (e) {
+    console.warn("Imported save failed to load, resetting:", e);
+    localStorage.clear();
+    return "That save code is corrupted and couldn't be loaded.";
+  }
+  return null;
+}
+
 function _loadGame() {
   const s = localStorage;
   const savedVersion = Number(s.getItem("saveVersion") || 0);

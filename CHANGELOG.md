@@ -43,6 +43,22 @@ When you bump the version, update the number in package.json and add an entry be
 
 ---
 
+## [1.6.0] — 2026-07-25
+
+### Added
+- Export/Import Save: a "Copy Save" code (base64-encoded snapshot of the full localStorage save) that can be pasted back in on any browser/device via a new Import Save modal, both in the Achievements tab — `js/save.js`'s `exportSaveString()`/`importSaveString()`, `index.html`. Addresses the player-trust concern that progress "tied to browser data seems dangerous" (Henvacelos, 2026-07-23) without standing up any backend/account system — reuses whatever `saveGame()` already persists rather than hand-listing fields a second time, so it can't silently drift out of sync as new save keys get added later. Import validates the payload and never partially applies a corrupt/invalid code. Verified in-browser: exporting at floor 110, resetting to floor 1, then importing the code correctly restored floor 110 and all other progress.
+
+---
+
+## [1.5.0] — 2026-07-24
+
+### Added
+- Version tag (bottom-left of the game panel, e.g. "v1.5.0") so bug reports can be matched to a build — `js/version.js`, `index.html`. Prompted by a player bug report that turned out to be an old cached/deployed build, not a real regression; the tag makes that distinguishable going forward.
+- 9 new equipment items (10 → 19 total) across the existing weapon/armor/ring slots and common/rare/legendary rarities — `js/equipment.js`. Each is a distinct stat shape rather than a straight power-up of an existing item at the same rarity (attack-speed weapons, a unit-discount armor line, pure-crit ring/weapon alternatives), so `hasDifferentStatShape()`'s existing "different shape beats pure salvage" logic actually surfaces them instead of auto-salvaging as sidegrades.
+- 4th equipment set, "Swiftblade Zeal" (Headsman's Axe + Warlord's Plate + Band of Tempo → +10% attack speed, +5% crit chance) — `js/equipment.js`.
+
+---
+
 ## [1.4.1] — 2026-07-13
 
 ### Fixed

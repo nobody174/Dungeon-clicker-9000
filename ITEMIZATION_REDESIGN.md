@@ -1,0 +1,168 @@
+# Itemization Overhaul — Design Doc (draft, 2026-07-24)
+
+Status: **DESIGN ONLY — not approved, not built.** Per CLAUDE.md rule 1
+(design first) and rule 5 (ask before touching anything that affects an
+already-shipped system — this touches Ascend indirectly via prestige-shifted
+drop rates, and rewrites the save format). Nothing below is committed to
+`equipment.js`, `state.js`, or `save.js` yet.
+
+## Why this is a bigger lift than BACKLOG #12
+
+BACKLOG.md #12 ("item variety expansion") scoped a content-volume top-up:
+more items in the existing 3 slots / 3 rarities, no architecture changes.
+This doc is for the larger ask that superseded it: **6 slots, 5 rarities,
+100 items, 8 sets, partial-set tiering, new affix types.** That means:
+
+- `state.equipped` (`state.js:46`) goes from a 3-key object to 6 keys —
+  **save-format change**, needs the SAVESTATE SAFETY fallback-default
+  treatment (old saves have no `helmet`/`boots`/`trinket`/`amulet` keys).
+- `save.js`'s save/load functions hardcode the 3 slot names explicitly
+  (`save.js:46`, `save.js:135`) rather than looping — both need editing,
+  and old saves must load cleanly with the new slots defaulting to `null`.
+- `stats.js:18` already loops `for (const slot in state.equipped)`, so new
+  slots plug into the multiplier pipeline for free — no change needed there
+  as long as new affixes reuse existing multiplier keys (see Affix Catalog).
+- `equipment.js`'s `rollLoot`/`showLootModal`/`renderEquipment` all assume
+  exactly `["weapon","armor","ring"]` in a few places and need the slot
+  list extended, not rewritten.
+- Partial-set bonuses are a new mechanic — today's `getActiveSetBonuses()`
+  is strictly all-or-nothing (`set.itemIds.every(...)`). This needs a
+  genuinely new tiered-bonus function.
+
+## Proposed slots (6 total, up from 3)
+
+| Slot | Existing? | Notes |
+|---|---|---|
+| Weapon | yes | unchanged |
+| Armor | yes | unchanged |
+| Ring | yes | unchanged |
+| Helmet | **new** | |
+| Boots | **new** | |
+| Amulet | **new** | separate from Ring — distinct slot, not a reskin |
+
+Trinket was considered and cut for v1 — 6 slots is already double the
+current count; a 7th adds surface area without a clear distinct identity
+from Amulet. Can revisit in a later pass.
+
+## Rarity tiers (5, up from 3)
+
+| Rarity | Color (existing CSS var pattern) | Relative power | Drop weight baseline (floor 1-9) |
+|---|---|---|---|
+| Common | `rarity-common` (existing) | 1.0× | 55% |
+| Rare | `rarity-rare` (existing) | 1.8× | 30% |
+| Epic | **new** — needs a `rarity-epic` CSS rule | 3.0× | 10% |
+| Legendary | `rarity-legendary` (existing) | 5.0× | 4.5% |
+| Mythic | **new** — needs a `rarity-mythic` CSS rule, gated `minPrestige: 1` | 8.5× | 0.5%, only rollable post-Ascend |
+
+Power multipliers are relative to a common item's single-stat roll at the
+same slot; used below to keep the 100-item table internally consistent
+rather than hand-waved.
+
+Existing `rollLoot()` rarity-weight logic (floor/prestige shifts common→
+rare→legendary) extends the same way to epic/mythic — same shape, just
+one more rarity band folded into the existing `common`/`rare`/`legendary`
+percentage variables, replaced with a 5-way weight table.
+
+## Affix catalog
+
+Existing multiplier keys already in `stats.js`'s `getTotalMult()` pipeline
+(reused, not replaced): `clickMult`, `goldMult`, `dpsMult`, `critChance`,
+`critMult`, `executeBonus`, `lifeSteal`, `missGoldPenaltyReduction`.
+
+New affixes needed for the requested build variety (gold farming / boss
+killing / shield-tank / crit / click-focused / passive DPS / hybrid):
+
+| New affix key | Effect | Where consumed |
+|---|---|---|
+| `bossDmgMult` | + damage vs. boss-flagged monsters only | `combat.js`'s `attack()`/`dealDamage`, gated on existing `isBoss` |
+| `damageReduction` | flat % reduction to boss-dodge-miss HP loss (distinct from existing `missGoldPenaltyReduction`, which only touches the gold penalty) | `bossCombat.js` miss-resolution branch |
+| `playerMaxHPBonus` | + flat player HP (tank identity, currently nothing modifies `PLAYER_MAX_HP`) | `bossCombat.js` / `state.js` |
+| `offlineGainMult` | + % offline earnings (hybrid/gold-farm identity) | `save.js` offline calc, alongside existing `getOfflineGainMult()` from prestige shop |
+| `potionDurationMult` | potions from `potions.js` last longer | `potions.js` buff-duration calc |
+
+All five are additive percentages/flats consumed the same way existing
+keys are, no new pipeline architecture — `getTotalMult()` stays a flat
+sum-of-sources function, just with a longer key list.
+
+## Set list (8 sets, up from 3)
+
+Existing 3 sets (Voidreaver's Fury, Hoarder's Fortune, Warden's Resolve)
+kept as-is, now spanning the wider slot list where thematically fitting.
+5 new sets to reach 8 total, one per requested archetype:
+
+1. **Voidreaver's Fury** (existing) — crit build.
+2. **Hoarder's Fortune** (existing) — gold farming.
+3. **Warden's Resolve** (existing) — shield/tank (dodge-miss mitigation).
+4. **Slayer's Vindication** (new) — boss killing. 4pc: weapon/helmet/armor/amulet. Uses new `bossDmgMult`.
+5. **Quickstrike Fury** (new) — click-focused. 3pc: weapon/ring/boots. Pure `clickMult` stacking, no crit overlap with set 1 (distinct identity).
+6. **Endless March** (new) — passive DPS. 3pc: armor/boots/amulet. Pure `dpsMult`, complements existing `dragonscale`/`void_plate` items rather than replacing them.
+7. **Ironclad Vow** (new) — shield/tank v2, deeper than Warden's Resolve. 4pc: helmet/armor/boots/ring. Uses new `playerMaxHPBonus` + `damageReduction`.
+8. **Wanderer's Fortune** (new) — hybrid. 4pc: any-slot mixed rarity (deliberately the "no single build" set) — small `goldMult` + small `dpsMult` + small `offlineGainMult`, for players not chasing a single archetype.
+
+### Partial-set tiering (new mechanic)
+
+Existing sets are all-or-nothing. New sets introduce **2-piece / full-piece**
+tiering (not more granular — keeps the "collect the set" pull without
+diluting into per-piece noise):
+
+- 2pc bonus: ~40% of the full bonus value.
+- Full bonus: as specified above.
+
+`getActiveSetBonuses()` needs a rewrite from `.every(...)` (boolean) to a
+tier-lookup (`ownedCount / totalCount` → matched threshold), consumed the
+same way by `getActiveSetBonus(key)`'s summation — existing call sites in
+`stats.js` don't need to change, just what feeds them.
+
+## Progression curve (bounded, not hand-wavy)
+
+Anchoring to existing `minFloor` gates (10/15/20/25 today) and the new
+epic/mythic bands:
+
+| Tier | minFloor range | Slot power example (single-stat common baseline ×) |
+|---|---|---|
+| Common | 1+ | 1.0× |
+| Rare | 8+ | 1.8× |
+| Epic | 18+ | 3.0× |
+| Legendary | 25+ | 5.0× |
+| Mythic | 40+, `minPrestige: 1` | 8.5× |
+
+100 items ÷ 6 slots ÷ 5 rarities ≈ **3-4 items per slot-rarity cell**,
+distinguished by which affix(es) they roll (e.g. 3 different Epic Rings:
+one crit-leaning, one gold-leaning, one hybrid) — avoids strict power
+creep where every new item just replaces the last; players choose based
+on build identity, consistent with `hasDifferentStatShape()`'s existing
+"different shape beats pure salvage" logic in `equipment.js`.
+
+## Drop tables
+
+Same two-step roll `rollLoot()` already does (rarity roll, then uniform
+pick within that rarity's eligible pool) — extended to 5 rarities and
+6 slots, no new roll mechanism:
+
+```
+rarity roll (floor/prestige-shifted, 5-way instead of 3-way)
+  → filter eligible items (slot pool is now 6-wide, same minFloor gate)
+    → uniform pick within rarity+slot-agnostic pool
+```
+
+Slot is NOT weighted in the roll (matches current behavior — the roll
+picks an item, whatever slot it happens to be) so 6 slots naturally
+dilutes how often any single slot refreshes; no change needed to
+`rollLoot()`'s core algorithm, only its input tables.
+
+## Open questions before implementation
+
+1. Do old players' currently-equipped weapon/armor/ring stay equipped
+   as-is with helmet/boots/amulet simply starting empty? (Recommended:
+   yes — matches SAVESTATE SAFETY's "fallback default" rule exactly.)
+2. Confirm mythic's `minPrestige: 1` gate doesn't create a chicken-and-egg
+   problem before a player's first Ascend (matches the existing
+   `weaponPaths` Reaper-path precedent, so should be fine, but worth
+   a sanity check against BACKLOG #4's void).
+3. Full 100-item table + all set/affix numeric tuning to be written up
+   as a follow-on doc once the above architecture is approved — this
+   doc is scoped to structure/math, not the literal item list, since
+   that's meaningless to finalize before the slot/rarity/affix shape
+   is signed off.
+
+**Waiting for go-ahead before writing the item table or touching code.**

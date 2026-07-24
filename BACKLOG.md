@@ -310,3 +310,64 @@ then 6, then 5 last as deliberately-endgame content.
     scope cut — only defeated/first-floor/kill-count are shown, no blank
     stat fields. New Playwright smoke test confirms 80 gallery cards
     render and the counter starts at 0/10.
+
+---
+
+## Post-launch batch (2026-07-23)
+
+Sourced from first community feedback (first Patreon supporter,
+Henvacelos). Not yet reviewed/prioritized against each other — logged
+as raw backlog items pending design pass.
+
+11. **Export/import save.** Progress currently lives only in
+    localStorage (`save.js`), so clearing browser data or switching
+    devices/browsers silently wipes a run. Reported as a player-trust
+    concern, not a crash bug: "being tied to browser data seems
+    dangerous."
+
+    ✅ **SHIPPED (2026-07-25), v1.6.0.** Built as scoped: no backend,
+    stays entirely local. `js/save.js`'s `exportSaveString()` dumps the
+    full localStorage key set (whatever `saveGame()` already writes,
+    read generically rather than hand-listed a second time, so it can't
+    silently drift out of sync as new save keys get added by future
+    features) into JSON, then base64-encodes it into one copyable code.
+    `importSaveString()` validates the payload (rejects malformed
+    base64/JSON, rejects anything missing a `gold` key as "not a
+    Dungeon Clicker 9000 save") before ever touching real
+    `localStorage`, and never partially applies a corrupt code — on any
+    failure the original save is left untouched. New Export/Import
+    modals in the Achievements tab (`index.html`), reusing the existing
+    `.modal`/`.modal-overlay` styling. Full cloud save (cross-device
+    sync via an account + backend) was explicitly declined for now —
+    see ROADMAP.md's note dated 2026-07-24 — since this local-only
+    approach solves the actual reported concern ("tied to browser data
+    seems dangerous") without that infrastructure cost. Verified
+    in-browser: exported at floor 110, reset to floor 1, imported the
+    code back, floor 110 and all other progress correctly restored.
+
+12. **Item variety expansion.** Currently only 10 gear items total (3
+    weapon, 4 armor, 3 ring — see `equipment.js`), across 3 rarities.
+    Reported directly: "the variety of items could increase." Auto-
+    equip/auto-salvage logic already handles picking the best item
+    per slot correctly (verified, not a bug) — this is a content-volume
+    gap, not a logic gap.
+
+    ✅ **SHIPPED (2026-07-24), v1.5.0.** Scoped deliberately small: no
+    new slots/rarities (that larger redesign — 6 slots, 5 rarities, 100
+    items, partial-set tiering — is fully designed but explicitly
+    deferred; see [ROADMAP.md](ROADMAP.md) → "Planned — future major
+    patch" → [ITEMIZATION_REDESIGN.md](ITEMIZATION_REDESIGN.md)). Added
+    9 items to `js/equipment.js` (10 → 19 total), 3 per existing slot
+    (one common/rare/legendary each): Quickblade/Headsman's Axe/
+    Chronoblade (weapon), Recruit's Tunic/Warlord's Plate/Aegis of Ages
+    (armor, introducing a new `unitDiscount`-flavored line), Hunter's
+    Signet/Band of Tempo/Ring of Ruin (ring). Each new item deliberately
+    uses a stat *shape* not already covered at that slot+rarity (e.g.
+    pure `attackSpeedMult`, pure `critChance`/`critMult`) rather than
+    just a bigger number on an existing shape, so the existing
+    `hasDifferentStatShape()` auto-salvage guard actually surfaces them
+    as real choices instead of silently treating them as sidegrades.
+    Added a 4th equipment set, "Swiftblade Zeal" (Headsman's Axe +
+    Warlord's Plate + Band of Tempo → +10% attack speed, +5% crit
+    chance), giving the new attack-speed/crit items a set identity
+    alongside the existing 3. No new mechanics, no save-format changes.

@@ -216,6 +216,7 @@
     }
     .hidden    { display:none !important; }
     #save-indicator { position:absolute; bottom:0.5rem; right:0.75rem; font-size:0.62rem; color:#5c8050; opacity:0; transition:opacity 0.5s ease; pointer-events:none; letter-spacing:1px; }
+    #version-tag { position:absolute; bottom:0.5rem; left:0.75rem; font-size:0.62rem; color:#5a5a70; pointer-events:none; letter-spacing:1px; }
     .attack-btn small { display:block; font-size:0.7rem; font-weight:normal; color:rgba(0,0,0,0.5); letter-spacing:0; margin-top:0.1rem; }
     .reset-btn { padding:0.5rem 1.2rem; background:#1a0808; color:#804040; border:1px solid #401010; border-radius:5px; cursor:pointer; font-family:Georgia,serif; font-size:0.8rem; }
     .reset-btn:hover { color:#cc6060; border-color:#803030; }
@@ -884,6 +885,7 @@
       <span class="prestige-badge" id="prestige-badge"></span>
     </div>
     <div id="save-indicator">Saved ✓</div>
+    <div id="version-tag"></div>
 
     <div class="arena">
       <div class="arena-scene">
@@ -1009,7 +1011,37 @@
       <div id="achievement-power" class="achievement-power"></div>
       <div id="achievements-list" class="achievements-list"></div>
       <div style="margin-top:1.2rem;text-align:center;border-top:1px solid #1e1e3e;padding-top:0.8rem">
+        <button class="reset-btn" onclick="openExportModal()" style="background:#0a1a12;color:#40a070;border-color:#106040;margin-right:0.5rem">💾 Export Save</button>
+        <button class="reset-btn" onclick="openImportModal()" style="background:#0a1420;color:#4090c0;border-color:#105080;margin-right:0.5rem">📥 Import Save</button>
         <button class="reset-btn" onclick="resetGame()">🗑️ Reset Save</button>
+      </div>
+    </div>
+
+    <!-- Export Save modal -->
+    <div id="export-modal" class="modal-overlay" style="display:none">
+      <div class="modal" style="max-width:420px">
+        <div class="modal-title" style="font-size:1.3rem">💾 Export Save</div>
+        <p class="modal-body">Copy this code somewhere safe. Paste it back in on any browser/device via "Import Save" to restore this exact progress.</p>
+        <textarea id="export-save-text" readonly style="width:100%;height:120px;font-size:0.7rem;background:#0d0d18;color:#c9a84c;border:1px solid #3a3a5a;border-radius:6px;padding:0.5rem;resize:vertical"></textarea>
+        <div class="modal-btns">
+          <button class="modal-confirm" onclick="copyExportSave()">📋 Copy to Clipboard</button>
+          <button class="modal-cancel" onclick="closeExportModal()">Close</button>
+        </div>
+        <p id="export-copy-msg" class="modal-small" style="height:1rem"></p>
+      </div>
+    </div>
+
+    <!-- Import Save modal -->
+    <div id="import-modal" class="modal-overlay" style="display:none">
+      <div class="modal" style="max-width:420px">
+        <div class="modal-title" style="font-size:1.3rem">📥 Import Save</div>
+        <p class="modal-body">Paste a save code below. <strong style="color:#cc6060">This replaces your current progress on this browser</strong> — make sure that's what you want first.</p>
+        <textarea id="import-save-text" placeholder="Paste your save code here..." style="width:100%;height:120px;font-size:0.7rem;background:#0d0d18;color:#e0e0e0;border:1px solid #3a3a5a;border-radius:6px;padding:0.5rem;resize:vertical"></textarea>
+        <div class="modal-btns">
+          <button class="modal-confirm" style="background:linear-gradient(135deg,#701010,#b02020);color:#ffb0b0;border-color:#a03030" onclick="confirmImportSave()">📥 Import (Overwrite)</button>
+          <button class="modal-cancel" onclick="closeImportModal()">Cancel</button>
+        </div>
+        <p id="import-error-msg" class="modal-small" style="color:#cc6060;height:1rem"></p>
       </div>
     </div>
 
