@@ -43,6 +43,25 @@ When you bump the version, update the number in package.json and add an entry be
 
 ---
 
+## [1.7.0] — 2026-07-25
+
+### Added
+- Bag/Inventory system: a new "🎒 Bag" sub-tab under Gear — dropped loot no longer forces an immediate keep-or-discard choice with no middle ground. Owned-but-unequipped gear lives in the Bag, sorted by slot then rarity, with rarity-colored item frames and an inline Equip/Salvage compare panel (reusing the loot pop-up's own compare layout) — `js/equipment.js`, `js/state.js`, `js/save.js`, `index.html`.
+- Loot pop-up restored with a real 3-way choice: **Equip**, **Place in Bag**, or **Discard** — `js/equipment.js`, `index.html`. Equipping something now returns whatever was previously equipped back to the Bag instead of destroying it.
+- Healing Tonic potion — an instant +2 HP heal on drink (not a timed buff like the other 5 potions) — `js/potions.js`.
+
+### Changed
+- Player max HP now scales with floor tier instead of a flat 4 forever — a floor-100 player had the exact same HP pool as a floor-5 player. Scales the same way monster stats already do (`4 + tier`) — `js/state.js`.
+- Salvage value now scales with floor tier the same way monster gold rewards do — flat salvage values had quietly become worthless well before endgame (a legendary's flat 2500g was worth a fraction of a single late-game boss kill) — `js/equipment.js`.
+
+### Fixed
+- **Stale weapon-path bonuses never cleared on Ascend.** Crit/DPS/execute/life-steal bonuses accumulated from a Duelist/Channeler/Reaper weapon path silently persisted across every future Ascend, regardless of which path was picked afterward — surfaced as unexplained HP regeneration on attack with no potions, gear, or life-steal active. `doAscend()` now correctly resets weapon-path bonuses alongside the other run-reset fields — `js/prestige.js`.
+- Boss-dodge idle-detection was keyed on click recency rather than actual tab focus/visibility — could silently skip a real miss penalty during normal, attentive-but-slower-paced play. Now keyed on whether the tab is actually visible and focused — `js/bossCombat.js`.
+- Hold-to-attack could get stuck firing indefinitely if the mouse button was released outside the browser window or the tab lost focus mid-hold — `js/main.js`.
+- Cache-busting for JS module imports on every deploy, so a stale browser-cached file can no longer be mistaken for a live bug — `scripts/stamp-versions.js`, `.github/workflows/deploy.yml`.
+
+---
+
 ## [1.6.0] — 2026-07-25
 
 ### Added
