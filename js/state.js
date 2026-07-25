@@ -44,7 +44,17 @@ export let phaseShiftsTriggered  = 0;
 
 // ── Equipment / loot ──
 export const equipped = { weapon: null, armor: null, ring: null };
-export let pendingLoot = null;
+export let inventory = []; // bag: array of { itemId, acquiredAt } for owned-but-unequipped gear
+export let pendingLoot = null; // item awaiting an Equip/Bag/Discard choice in the loot modal
+
+export function addToInventory(itemId) {
+  inventory.push({ itemId, acquiredAt: Date.now() });
+}
+export function removeFromInventory(index) {
+  inventory.splice(index, 1);
+}
+export function setInventory(v) { inventory = v; }
+export function setPendingLoot(v) { pendingLoot = v; }
 
 // ── Potions ──
 export let activeBuffs   = [];
@@ -63,14 +73,22 @@ export let lastLungeTime = 0;
 export let lastRecoilTime = 0;
 
 // ── Boss Combat v1: Player HP & Dodge (real-time tick loop, decoupled from goldPerSecond/offline math) ──
-export const PLAYER_MAX_HP = 4; // small fixed pool, fully refills between boss fights, no meta-layer
-export let playerHP = PLAYER_MAX_HP;
+// BACKLOG.md #13 design pass (2026-07-25): max HP scales with tier (same 10-floor bands
+// getMonsterIdentity() already uses for monster stats/icons) instead of a flat constant — a
+// floor-100 player having the exact same 4 HP as a floor-5 player read as "strange" (player
+// feedback), since the miss-gold-penalty side already scaled (it's a % of current gold) while HP
+// didn't. +1 max HP per tier, uncapped (tier itself is already unbounded past floor 71+), fully
+// refills every boss fight same as before — no persistent meta-layer, no save-state change.
+const PLAYER_BASE_HP = 4;
+export function getPlayerMaxHP() {
+  const tier = Math.floor((currentFloor - 1) / 10);
+  return PLAYER_BASE_HP + tier;
+}
+export let playerHP = PLAYER_BASE_HP;
 export let bossAttackState = "idle"; // "idle" | "windup" | "resolved" — idle = no boss fight running
-export let lastPlayerActionTime = 0; // updated on click/attack; used to detect idle/away players for auto-dodge
 
-export function setPlayerHP(v) { playerHP = Math.max(0, Math.min(PLAYER_MAX_HP, v)); }
+export function setPlayerHP(v) { playerHP = Math.max(0, Math.min(getPlayerMaxHP(), v)); }
 export function setBossAttackState(v) { bossAttackState = v; }
-export function setLastPlayerActionTime(v) { lastPlayerActionTime = v; }
 
 // ── Hero Trials: run-scoped negative-condition counter ──
 // Most trials (js/heroes.js's `trial.check()`) can read existing lifetime stats directly
@@ -166,7 +184,6 @@ export function incShieldsBroken() { shieldsBroken += 1; }
 export function setPhaseShiftsTriggered(v) { phaseShiftsTriggered = v; }
 export function incPhaseShiftsTriggered() { phaseShiftsTriggered += 1; }
 
-export function setPendingLoot(v) { pendingLoot = v; }
 export function setActiveBuffs(v) { activeBuffs = v; }
 export function setPotionsBought(v) { potionsBought = v; }
 

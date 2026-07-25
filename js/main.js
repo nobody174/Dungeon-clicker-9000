@@ -7,16 +7,16 @@ import * as state from "./state.js";
 import { getAutoClickRate, getTotalMult, pruneExpiredBuffs } from "./stats.js";
 import { units, renderUnitCosts } from "./units.js";
 import { toggleMute, setVolumeLevel } from "./audio.js";
-import { showTab, showShopTab, resetGame, flashSaveIndicator, renderStats } from "./ui.js";
+import { showTab, showShopTab, showGearTab, resetGame, flashSaveIndicator, renderStats } from "./ui.js";
 import { startAttackHold, stopAttackHold, attack, spawnPassiveFloats, dealDamage } from "./combat.js";
 import { openAscendModal, closeModal, doAscend } from "./prestige.js";
-import { equipLoot, discardLoot } from "./equipment.js";
+import { equipFromInventory, salvageFromInventory, toggleBagCompare, equipPendingLoot, bagPendingLoot, discardPendingLoot } from "./equipment.js";
 import { levelUpHero } from "./heroes.js";
 import { saveGame, loadGame, exportSaveString, importSaveString } from "./save.js";
 import { renderActiveBuffs } from "./potions.js";
 import { loadMonster } from "./monsters.js";
 import { updateGold } from "./ui.js";
-import { dodge, markPlayerAction, renderPlayerHP } from "./bossCombat.js";
+import { dodge, renderPlayerHP } from "./bossCombat.js";
 import { startChallenge, endChallenge, exitChallengeEarly, closeChallengeResult, isChallengeRunning } from "./challenge.js";
 import { buyVoidUpgrade, setVoidRiskLevel } from "./voidFragments.js";
 import { devAddGold, devSetFloor, devAddPrestige, devSetClickDamage, devRestoreClickDamage, isDevOneShotActive, devMaxMastery, devKillBoss } from "./dev.js";
@@ -86,12 +86,17 @@ window.startAttackHold  = startAttackHold;
 window.stopAttackHold   = stopAttackHold;
 window.showTab          = showTab;
 window.showShopTab      = showShopTab;
+window.showGearTab      = showGearTab;
 window.openAscendModal  = openAscendModal;
 window.resetGame        = resetGame;
 window.doAscend         = doAscend;
 window.closeModal       = closeModal;
-window.equipLoot        = equipLoot;
-window.discardLoot      = discardLoot;
+window.equipFromInventory   = equipFromInventory;
+window.salvageFromInventory = salvageFromInventory;
+window.toggleBagCompare     = toggleBagCompare;
+window.equipPendingLoot     = equipPendingLoot;
+window.bagPendingLoot       = bagPendingLoot;
+window.discardPendingLoot   = discardPendingLoot;
 window.levelUpHero      = levelUpHero;
 window.dodgeAttack      = dodge;
 window.startChallenge   = startChallenge;
@@ -165,7 +170,7 @@ setInterval(() => { saveGame(); flashSaveIndicator(); }, 30000);
 
 document.addEventListener("keydown", e => {
   if (e.code === "Space" && !e.repeat) { e.preventDefault(); attack(null); }
-  if (e.code === "KeyD" && !e.repeat) { e.preventDefault(); markPlayerAction(); dodge(); }
+  if (e.code === "KeyD" && !e.repeat) { e.preventDefault(); dodge(); }
 });
 
 // Safety net for hold-to-attack (startAttackHold/stopAttackHold in combat.js): the button's own

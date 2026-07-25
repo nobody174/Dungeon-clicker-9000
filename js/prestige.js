@@ -129,6 +129,13 @@ export function doAscend() {
   state.setMonsterDead(false);
   state.setWeaponsBought({});
   state.setSelectedWeaponPath(null);
+  // Bug fix (player report, 2026-07-25): weaponBonus (critChance/critMult/dpsMult/executeBonus/
+  // lifeSteal accumulated from Duelist/Channeler/Reaper tier purchases) was never actually reset
+  // here despite state.js's own comment claiming it resets on ascend — weaponsBought/
+  // selectedWeaponPath reset correctly, but the separate weaponBonus object did not, so e.g. a
+  // leftover lifeSteal% from a prior Reaper-path run kept silently healing the player on every
+  // click in all future runs, even after switching to Brute/Duelist and buying nothing new.
+  state.setWeaponBonus({ critChance: 0, critMult: 0, dpsMult: 0, executeBonus: 0, lifeSteal: 0 });
   state.setPotionsBought({});
   for (const k in units) units[k].count = 0;
   recalcPassive();

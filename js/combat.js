@@ -14,8 +14,6 @@ import { showToast } from "./toast.js";
 import { checkAchievements } from "./achievements.js";
 import { checkHeroUnlocks, checkHeroTrials } from "./heroes.js";
 import { renderTrophyRoom } from "./trophies.js";
-import { markPlayerAction } from "./bossCombat.js";
-import { PLAYER_MAX_HP } from "./state.js";
 
 export function spawnOverlay(cls, dur) {
   const el = document.createElement("div");
@@ -164,7 +162,6 @@ export function dealDamage(amount, isClick) {
 
 export function attack(event) {
   if (state.monsterDead) return;
-  markPlayerAction();
   initAudio();
   playClickSound();
   triggerLunge();
@@ -182,9 +179,9 @@ export function attack(event) {
   if (isExecute) dmg = Math.floor(dmg * (1 + executeBonus));
 
   // Path of the Reaper — life-steal: chance to heal 1 player HP on hit (only meaningful during
-  // a boss fight, where playerHP/PLAYER_MAX_HP actually matters; harmless no-op otherwise).
+  // a boss fight, where playerHP/getPlayerMaxHP() actually matters; harmless no-op otherwise).
   const lifeSteal = getTotalMult("lifeSteal");
-  if (lifeSteal > 0 && state.rollRandom() < lifeSteal && state.playerHP < PLAYER_MAX_HP) {
+  if (lifeSteal > 0 && state.rollRandom() < lifeSteal && state.playerHP < state.getPlayerMaxHP()) {
     state.setPlayerHP(state.playerHP + 1);
   }
 

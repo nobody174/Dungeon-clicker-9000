@@ -55,13 +55,28 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
       - name: Setup Pages
         uses: actions/configure-pages@v5
+
+      # Cache-busting: stamps every JS import + the entry <script> tag with ?v=<version> so a
+      # release always forces browsers to re-fetch every module, not just index.html/main.js.
+      # Runs against a copy in pages-build/ — never touches the checked-out source, so local dev
+      # (npm run serve) keeps clean, unversioned import paths. See scripts/stamp-versions.js.
+      - name: Prepare version-stamped build
+        run: |
+          mkdir -p pages-build
+          cp index.html pages-build/
+          cp -r js pages-build/
+          node scripts/stamp-versions.js pages-build
 
       - name: Upload site
         uses: actions/upload-pages-artifact@v3
         with:
-          path: "."
+          path: "pages-build"
 
       - name: Deploy to GitHub Pages
         id: deployment
@@ -81,14 +96,17 @@ jobs:
       - name: Install Node dependencies
         run: npm ci
 
-      - name: Build game
-        run: npm run build || echo "No build step found"
-
       - name: Prepare itch.io build folder
         run: |
           mkdir -p itch-build
           cp index.html itch-build/
           cp -r js itch-build/
+
+      # Cache-busting: same ?v=<version> stamp as the GitHub Pages build (see scripts/stamp-versions.js)
+      # so a stale-JS report on itch.io (this exact class of bug happened twice already) can't
+      # recur — only touches the itch-build/ copy, never the checked-out source.
+      - name: Stamp cache-busting versions
+        run: node scripts/stamp-versions.js itch-build
 
       - name: Install Butler
         run: |

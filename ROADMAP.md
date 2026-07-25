@@ -27,6 +27,19 @@ Part 2 (depends on Part 1 shipping first): named gear loadouts (e.g.
 "Gold Farm" / "Boss Killer") that swap all 3 slots at once. Also not
 started — same reasoning as the itemization overhaul above.
 
+**Real Artwork Pass.** Design doc written, not yet approved:
+[ART_UPGRADE.md](ART_UPGRADE.md). Surfaced by a player observation
+(Henvacelos, 2026-07-24) that the Skeleton monster's 🦴 icon reads less
+"skeleton" than the Lich King boss's 💀 — the specific icon swap was
+declined (both kept as-is on reflection), but it exposed a real ceiling
+in the current all-emoji visual identity system (10 monsters × 8 tiers,
+19 gear items, 8 heroes, all single-emoji strings). Doc scopes a
+monsters-first real-art pass (PNG/SVG, reusing the existing tier-recolor
+CSS trick so it stays at 10 base assets, not 80), sourcing options
+(AI-generated / commissioned / licensed pack — undecided), and a
+fallback-safe technical swap-in plan. Not started — needs a sourcing
+decision and scope confirmation first.
+
 **Cloud save — explicitly declined for now (2026-07-24).** Considered
 alongside the above; decided against standing up a backend/auth system
 for this. BACKLOG.md #11 (export/import save, no backend needed) covers

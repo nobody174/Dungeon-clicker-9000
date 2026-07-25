@@ -5,7 +5,7 @@ import * as state from "./state.js";
 import { units, recalcPassive, renderUnits } from "./units.js";
 import { shardShop, renderShardUpgrades, applyRunBonuses, getOfflineCapSeconds, getOfflineGainMult } from "./prestige.js";
 import { achievements, renderAchievements, updateAchCount } from "./achievements.js";
-import { equipment, renderEquipment } from "./equipment.js";
+import { equipment, renderEquipment, renderInventory } from "./equipment.js";
 import { heroes, renderHeroes, checkHeroUnlocks, heroTrials } from "./heroes.js";
 import { formatNum } from "./utils.js";
 import { goldPerSecond, pruneExpiredBuffs } from "./stats.js";
@@ -44,6 +44,7 @@ export function saveGame() {
   s.setItem("shardUpgrades",     JSON.stringify(shardShop.map(u => u.owned)));
   s.setItem("achievements",      JSON.stringify(achievements.map(a => a.unlocked)));
   s.setItem("equipped",          JSON.stringify({ weapon: state.equipped.weapon?.id || null, armor: state.equipped.armor?.id || null, ring: state.equipped.ring?.id || null }));
+  s.setItem("inventory",         JSON.stringify(state.inventory));
   s.setItem("heroData",          JSON.stringify(heroes.map(h => ({ unlocked: h.unlocked, level: h.level }))));
   s.setItem("activeBuffs",       JSON.stringify(state.activeBuffs));
   s.setItem("potionsBought",     JSON.stringify(state.potionsBought));
@@ -178,6 +179,8 @@ function _loadGame() {
       state.equipped[slot] = eq[slot] ? (equipment.find(e => e.id === eq[slot]) || null) : null;
     }
   }
+  const inv = j("inventory");
+  if (inv) state.setInventory(inv);
 
   // Load hero data (persists through prestige)
   const hd = j("heroData");
@@ -226,6 +229,7 @@ function _loadGame() {
   renderAchievements();
   updateAchCount();
   renderEquipment();
+  renderInventory();
   renderHeroes();
   checkHeroUnlocks();
   updatePrestigeBadge();

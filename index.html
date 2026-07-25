@@ -679,18 +679,47 @@
       border-top: 1px solid #2a2a42; padding-top: 0.55rem; margin-bottom: 0.65rem; text-align: left;
     }
     .loot-compare-label { font-size: 0.65rem; color: #9a9ab0; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 0.3rem; text-align: center; }
-    .loot-compare-row   { display: flex; align-items: center; gap: 0.5rem; padding: 0.35rem 0.5rem; border-radius: 6px; margin-bottom: 0.18rem; }
+    .loot-compare-row   { position: relative; padding: 1.1rem 0.5rem 0.35rem; border-radius: 6px; margin-bottom: 0.3rem; }
     .loot-compare-row.new-item  { background: #0d1f10; border: 1px solid #1e4020; }
     .loot-compare-row.cur-item  { background: #1a1424; border: 1px solid #2a1e38; }
-    .loot-compare-tag { font-size: 0.62rem; letter-spacing: 1px; text-transform: uppercase; flex-shrink: 0; width: 2.8rem; }
-    .loot-compare-tag.tag-new { color: #5c8; }
-    .loot-compare-tag.tag-cur { color: #9a96b8; }
-    .loot-compare-info { flex: 1; }
+    .loot-compare-tag {
+      position: absolute; top: -0.55rem; left: 0.5rem;
+      font-size: 0.58rem; letter-spacing: 0.5px; text-transform: uppercase;
+      padding: 0.1rem 0.4rem; border-radius: 3px; background: #16213e;
+    }
+    .loot-compare-tag.tag-new { color: #5c8; border: 1px solid #1e4020; }
+    .loot-compare-tag.tag-cur { color: #9a96b8; border: 1px solid #2a1e38; }
+    .loot-compare-info { width: 100%; }
     .loot-compare-name  { font-size: 0.82rem; }
     .loot-compare-bonus { font-size: 0.72rem; color: #5c8; }
     .loot-compare-bonus.cur-bonus { color: #9a9ab0; }
     .loot-empty-slot { font-size: 0.75rem; color: #9a9ab0; text-align: center; margin-bottom: 0.65rem; }
     .loot-modal .modal-confirm { background: linear-gradient(135deg,#5a3a00,#a07000); color: #ffd700; border-color: #a07000; }
+    .loot-modal .modal-btns { flex-wrap: wrap; }
+    .loot-bag-btn {
+      padding: 0.65rem 1.2rem; background: #16202e; color: #78b8d8; border: 1px solid #2a5a78;
+      border-radius: 8px; cursor: pointer; font-family: Georgia, serif; font-size: 0.9rem;
+    }
+    .loot-bag-btn:hover { filter: brightness(1.2); }
+
+    /* ── Bag / Inventory tab ── */
+    .bag-item-row {
+      display: flex; align-items: center; gap: 0.7rem;
+      background: #181c28; border: 1px solid #2a2d3a; border-radius: 8px;
+      padding: 0.6rem 0.8rem; margin-bottom: 0.5rem;
+    }
+    .bag-item-icon { font-size: 1.6rem; flex-shrink: 0; }
+    .bag-item-info { flex: 1; min-width: 0; }
+    .bag-item-name  { font-size: 0.85rem; margin-bottom: 0.15rem; }
+    .bag-item-bonus { font-size: 0.72rem; color: #5c8; }
+    .bag-item-actions { display: flex; flex-direction: column; gap: 0.3rem; flex-shrink: 0; }
+    .bag-item-actions .upgrade-btn  { font-size: 0.72rem; padding: 0.4rem 0.6rem; }
+    .bag-item-actions .reset-btn    { font-size: 0.72rem; padding: 0.4rem 0.6rem; }
+    .bag-item-actions .loot-bag-btn { font-size: 0.72rem; padding: 0.4rem 0.6rem; }
+    .bag-item-row.rarity-frame-common    { border-color: #5a5a5a; }
+    .bag-item-row.rarity-frame-rare      { border-color: #3366cc; box-shadow: 0 0 6px rgba(68,136,255,0.15); }
+    .bag-item-row.rarity-frame-legendary { border-color: #c9a84c; box-shadow: 0 0 8px rgba(255,215,0,0.2); }
+    .bag-item-row .loot-compare { border-top: 1px solid #2a2a42; margin-top: 0.5rem; padding-top: 0.5rem; }
 
     /* ── Toast ── */
     #toast-container {
@@ -966,11 +995,23 @@
 
     <!-- Gear tab -->
     <div id="tab-gear" class="tab-content" style="display:none">
-      <h2>🗡️ Equipped Gear</h2>
-      <div id="tab-gear-content"></div>
-      <h2>🔗 Set Bonuses</h2>
-      <div id="tab-gear-sets"></div>
-      <p style="font-size:0.75rem;color:#9a9ab0;margin-top:0.6rem;text-align:center">Bosses drop loot. Better floors → rarer items.</p>
+      <div class="sub-tab-bar">
+        <button class="sub-tab-btn active" onclick="showGearTab('equipped')">🗡️ Equipped</button>
+        <button class="sub-tab-btn" onclick="showGearTab('bag')">🎒 Bag</button>
+      </div>
+
+      <div id="subtab-equipped" class="sub-tab-content">
+        <h2>🗡️ Equipped Gear</h2>
+        <div id="tab-gear-content"></div>
+        <h2>🔗 Set Bonuses</h2>
+        <div id="tab-gear-sets"></div>
+        <p style="font-size:0.75rem;color:#9a9ab0;margin-top:0.6rem;text-align:center">Bosses drop loot — you'll be asked to equip, bag, or discard it. Better floors → rarer items.</p>
+      </div>
+
+      <div id="subtab-bag" class="sub-tab-content" style="display:none">
+        <h2>🎒 Inventory</h2>
+        <div id="tab-bag-content"></div>
+      </div>
     </div>
 
     <!-- Heroes tab -->
@@ -1101,6 +1142,20 @@
   </div>
 </div>
 
+
+<!-- ── Challenge result modal ── -->
+<div id="challenge-result-modal" class="modal-overlay" style="display:none">
+  <div class="modal">
+    <div class="modal-title">🗓️ Challenge Complete!</div>
+    <p class="modal-body">Score: <strong id="challenge-result-score">Floor 1</strong></p>
+    <p class="modal-body modal-small" id="challenge-result-best">Best today: Floor 1</p>
+    <p class="modal-body modal-small">No permanent rewards — bragging rights only. Come back tomorrow for a new seed.</p>
+    <div class="modal-btns">
+      <button class="modal-confirm" onclick="closeChallengeResult()">Nice</button>
+    </div>
+  </div>
+</div>
+
 <!-- ── Loot modal ── -->
 <div id="loot-modal" class="modal-overlay" style="display:none">
   <div class="loot-modal">
@@ -1113,21 +1168,9 @@
     <div class="loot-item-set" id="loot-item-set" style="display:none"></div>
     <div id="loot-compare-section"></div>
     <div class="modal-btns">
-      <button class="modal-confirm" onclick="equipLoot()">⚔️ Equip</button>
-      <button class="modal-cancel" onclick="discardLoot()">Discard</button>
-    </div>
-  </div>
-</div>
-
-<!-- ── Challenge result modal ── -->
-<div id="challenge-result-modal" class="modal-overlay" style="display:none">
-  <div class="modal">
-    <div class="modal-title">🗓️ Challenge Complete!</div>
-    <p class="modal-body">Score: <strong id="challenge-result-score">Floor 1</strong></p>
-    <p class="modal-body modal-small" id="challenge-result-best">Best today: Floor 1</p>
-    <p class="modal-body modal-small">No permanent rewards — bragging rights only. Come back tomorrow for a new seed.</p>
-    <div class="modal-btns">
-      <button class="modal-confirm" onclick="closeChallengeResult()">Nice</button>
+      <button class="modal-confirm" onclick="equipPendingLoot()">⚔️ Equip</button>
+      <button class="loot-bag-btn" onclick="bagPendingLoot()">🎒 Place in Bag</button>
+      <button class="modal-cancel" onclick="discardPendingLoot()">Discard</button>
     </div>
   </div>
 </div>

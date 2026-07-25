@@ -12,9 +12,8 @@ import { renderUnitCosts } from "./units.js";
 // ── Equipment (19 items) ──
 // BACKLOG.md #12: item variety expansion within the existing 3-slot/3-rarity system (no new
 // slots/rarities — that's the deferred ITEMIZATION_REDESIGN.md scope). Each new item is a
-// distinct stat *shape*, not a straight power-up of an existing one at the same rarity, so
-// hasDifferentStatShape()'s "different shape beats pure salvage" logic actually surfaces them
-// instead of them being auto-salvaged as sidegrades.
+// distinct stat *shape*, not a straight power-up of an existing one at the same rarity, giving
+// each a reason to sit in the bag as a real alternative build rather than just a bigger number.
 export const equipment = [
   { id:"rusted_blade",   slot:"weapon", rarity:"common",    name:"Rusted Blade",      icon:"🗡️",  flavor:"A forgotten soldier's last companion.",          bonus:{ clickMult:0.10 }, salvageValue:100 },
   { id:"bloodaxe",       slot:"weapon", rarity:"rare",      name:"Bloodstained Axe",  icon:"🪓",  flavor:"Still warm from its last kill.",                 bonus:{ clickMult:0.25 }, salvageValue:500 },
@@ -78,37 +77,18 @@ export function getActiveSetBonus(key) {
   return getActiveSetBonuses().reduce((sum, set) => sum + (set.bonus[key] || 0), 0);
 }
 
-export function itemPowerScore(item) {
-  return Object.values(item.bonus).reduce((sum, v) => sum + v, 0);
+// Player feedback (2026-07-25): a legendary's flat 2500g salvage value is worth ~1/3 of a single
+// floor-20 boss kill and becomes literally negligible well before endgame (a floor-100 boss kill
+// nets 800k+ gold) — the flat values were never rebalanced against the exponential gold curve, so
+// "salvage" had quietly become "discard with an irrelevant number attached." Scales the same way
+// monster gold rewards do (1.8× per tier, monsters.js/stats.js) so salvaging stays a meaningful
+// choice at every stage instead of only in the first ~20 floors.
+export function getSalvageValue(item) {
+  const base = item.salvageValue || 0;
+  const tier = Math.floor((state.currentFloor - 1) / 10);
+  return Math.floor(base * Math.pow(1.8, tier));
 }
 
-// A dropped item is only worth showing to the player if it's strictly better than what's
-// equipped, or it grants different bonus types entirely (e.g. a ring with clickMult+goldMult
-// vs. one with goldMult only) — matching stat shape at equal-or-lower power is pure clutter.
-function hasDifferentStatShape(item, current) {
-  const itemKeys    = Object.keys(item.bonus).sort().join(",");
-  const currentKeys = Object.keys(current.bonus).sort().join(",");
-  return itemKeys !== currentKeys;
-}
-
-// Whether equipping `item` in place of `current` would complete (or maintain progress toward)
-// a set that isn't already fully equipped. Prevents the auto-salvage logic below from silently
-// discarding a set-completing drop just because its raw stat sum is lower than what's equipped.
-// Does NOT protect a drop that is simply a duplicate of the piece already equipped for that
-// set — that item is already contributing to the set, so a second copy adds nothing (this was
-// a real bug: a second Voidreaver kept surfacing in the loot modal even with Voidreaver already
-// equipped, because the set-progress check only looked at set-completeness, not at whether this
-// exact item was the one already worn).
-function wouldHelpCompleteSet(item) {
-  const equippedIds = Object.values(state.equipped).filter(Boolean).map(i => i.id);
-  if (equippedIds.includes(item.id)) return false; // exact duplicate of an already-equipped piece
-  return equipmentSets.some(set => {
-    if (!set.itemIds.includes(item.id)) return false;
-    const alreadyComplete = set.itemIds.every(id => equippedIds.includes(id));
-    if (alreadyComplete) return false; // already got the bonus, no need to protect this drop
-    return true;
-  });
-}
 
 export function renderEquipment() {
   const slotLabels = { weapon: "⚔️ Weapon", armor: "🛡️ Armor", ring: "💍 Jewelry" };
@@ -154,6 +134,9 @@ export function renderEquipment() {
   }
 }
 
+// A drop still auto-salvages if it's an exact duplicate of something already owned/equipped (a
+// second copy of the same item has no possible use), but otherwise surfaces a loot modal so the
+// player explicitly chooses Equip / Place in Bag / Discard, rather than silently landing in the bag.
 export function rollLoot(bossFloor) {
   const effectiveFloor = bossFloor + state.prestigeCount * 3;
   const eligible = equipment.filter(e => !e.minFloor || effectiveFloor >= e.minFloor);
@@ -169,24 +152,23 @@ export function rollLoot(bossFloor) {
   let pool = eligible.filter(e => e.rarity === targetRarity);
   if (!pool.length) pool = eligible;
   const dropped = pool[Math.floor(state.rollRandom() * pool.length)];
-  const current = state.equipped[dropped.slot];
-  const isWorthShowing = !current
-    || itemPowerScore(dropped) > itemPowerScore(current)
-    || hasDifferentStatShape(dropped, current)
-    || wouldHelpCompleteSet(dropped);
-  if (current && !isWorthShowing) {
-    const sv = dropped.salvageValue || 0;
+
+  const alreadyOwned = state.inventory.some(i => i.itemId === dropped.id)
+    || Object.values(state.equipped).some(e => e?.id === dropped.id);
+  if (alreadyOwned) {
+    const sv = getSalvageValue(dropped);
     state.addGold(sv); state.addTotalGoldEarned(sv); updateGold(); flashGold();
-    showToast("⚗️ Salvaged!", dropped.name + " (weaker) → +" + formatNum(sv) + "g");
+    showToast("⚗️ Salvaged (duplicate)", dropped.name + " → +" + formatNum(sv) + "g");
     return null;
   }
+
   return dropped;
 }
 
 export function showLootModal(item) {
   state.setPendingLoot(item);
-  const cur       = state.equipped[item.slot];
-  const newBonus  = Object.entries(item.bonus).map(([k,v]) => bonusLabel(k,v)).join(" • ");
+  const cur      = state.equipped[item.slot];
+  const newBonus = Object.entries(item.bonus).map(([k,v]) => bonusLabel(k,v)).join(" • ");
 
   document.getElementById("loot-item-icon").textContent   = item.icon;
   document.getElementById("loot-item-name").innerHTML     = `<span class="rarity-${item.rarity}">${item.name}</span>`;
@@ -194,8 +176,6 @@ export function showLootModal(item) {
   document.getElementById("loot-item-flavor").textContent = item.flavor;
   document.getElementById("loot-item-bonus").textContent  = newBonus;
 
-  // Show which equipment set (if any) this item belongs to, and current progress toward it,
-  // so the player can judge a drop's set value before deciding to equip or discard it.
   const setEl = document.getElementById("loot-item-set");
   if (setEl) {
     const equippedIds = Object.values(state.equipped).filter(Boolean).map(i => i.id);
@@ -223,7 +203,7 @@ export function showLootModal(item) {
           </div>
         </div>
         <div class="loot-compare-row cur-item">
-          <span class="loot-compare-tag tag-cur">NOW</span>
+          <span class="loot-compare-tag tag-cur">EQUIPPED</span>
           <div class="loot-compare-info">
             <div class="loot-compare-name"><span class="rarity-${cur.rarity}">${cur.name}</span></div>
             <div class="loot-compare-bonus cur-bonus">${curBonus}</div>
@@ -237,20 +217,142 @@ export function showLootModal(item) {
   document.getElementById("loot-modal").style.display = "flex";
 }
 
-export function equipLoot() {
+export function equipPendingLoot() {
   if (!state.pendingLoot) return;
   const item = state.pendingLoot;
+  const previous = state.equipped[item.slot];
   state.equipped[item.slot] = item;
+  if (previous) state.addToInventory(previous.id); // swapped-out piece goes to the bag, not lost
   state.setPendingLoot(null);
   document.getElementById("loot-modal").style.display = "none";
   renderEquipment();
+  renderInventory();
   renderStats();
   renderUnitCosts();
   showToast("⚔️ Equipped!", item.name + " is now active.");
   saveGame();
 }
 
-export function discardLoot() {
+export function bagPendingLoot() {
+  if (!state.pendingLoot) return;
+  const item = state.pendingLoot;
+  state.addToInventory(item.id);
   state.setPendingLoot(null);
   document.getElementById("loot-modal").style.display = "none";
+  renderInventory();
+  showToast("🎒 Stored", item.name + " was added to your bag.");
+  saveGame();
+}
+
+export function discardPendingLoot() {
+  if (!state.pendingLoot) return;
+  const item = state.pendingLoot;
+  const sv = getSalvageValue(item);
+  state.addGold(sv); state.addTotalGoldEarned(sv); updateGold(); flashGold();
+  state.setPendingLoot(null);
+  document.getElementById("loot-modal").style.display = "none";
+  showToast("⚗️ Salvaged", item.name + " → +" + formatNum(sv) + "g");
+  saveGame();
+}
+
+const SLOT_ORDER = ["weapon", "armor", "ring"];
+const RARITY_ORDER = { common: 0, rare: 1, legendary: 2 };
+const SLOT_ICONS = { weapon: "⚔️", armor: "🛡️", ring: "💍" };
+
+let expandedBagIndex = null; // which bag row (if any) currently shows its compare panel
+
+export function toggleBagCompare(index) {
+  expandedBagIndex = expandedBagIndex === index ? null : index;
+  renderInventory();
+}
+
+function compareRowsHtml(item, cur) {
+  const newBonus = Object.entries(item.bonus).map(([k,v]) => bonusLabel(k,v)).join(" • ");
+  if (!cur) return `<div class="loot-empty-slot">Slot is empty — no tradeoff.</div>`;
+  const curBonus = Object.entries(cur.bonus).map(([k,v]) => bonusLabel(k,v)).join(" • ");
+  return `
+    <div class="loot-compare">
+      <div class="loot-compare-label">Compare</div>
+      <div class="loot-compare-row new-item">
+        <span class="loot-compare-tag tag-new">BAG</span>
+        <div class="loot-compare-info">
+          <div class="loot-compare-name"><span class="rarity-${item.rarity}">${item.name}</span></div>
+          <div class="loot-compare-bonus">${newBonus}</div>
+        </div>
+      </div>
+      <div class="loot-compare-row cur-item">
+        <span class="loot-compare-tag tag-cur">EQUIPPED</span>
+        <div class="loot-compare-info">
+          <div class="loot-compare-name"><span class="rarity-${cur.rarity}">${cur.name}</span></div>
+          <div class="loot-compare-bonus cur-bonus">${curBonus}</div>
+        </div>
+      </div>
+    </div>`;
+}
+
+export function renderInventory() {
+  const container = document.getElementById("tab-bag-content");
+  if (!container) return;
+  if (!state.inventory.length) {
+    container.innerHTML = `<p style="font-size:0.8rem;color:#9a9ab0;text-align:center;margin:1rem 0">Your bag is empty. Defeat bosses for a chance at loot.</p>`;
+    return;
+  }
+  // Sorted by slot group first (matches how a player actually browses — "what could fill my
+  // empty ring slot" — rather than interleaving weapons/armor/rings), rarity within each group.
+  const sortedIndices = state.inventory
+    .map((entry, i) => ({ entry, i, item: equipment.find(e => e.id === entry.itemId) }))
+    .filter(x => x.item)
+    .sort((a, b) => {
+      const slotDiff = SLOT_ORDER.indexOf(a.item.slot) - SLOT_ORDER.indexOf(b.item.slot);
+      if (slotDiff !== 0) return slotDiff;
+      return RARITY_ORDER[a.item.rarity] - RARITY_ORDER[b.item.rarity];
+    });
+
+  container.innerHTML = sortedIndices.map(({ item, i }) => {
+    const bonusText = Object.entries(item.bonus).map(([k,v]) => bonusLabel(k,v)).join(", ");
+    const isExpanded = expandedBagIndex === i;
+    const cur = state.equipped[item.slot];
+    return `<div class="bag-item-row rarity-frame-${item.rarity}">
+      <div class="bag-item-icon">${item.icon}</div>
+      <div class="bag-item-info">
+        <div class="bag-item-name">${SLOT_ICONS[item.slot]} <span class="rarity-${item.rarity}">${item.name}</span></div>
+        <div class="bag-item-bonus">${bonusText}</div>
+        ${isExpanded ? compareRowsHtml(item, cur) : ""}
+      </div>
+      <div class="bag-item-actions">
+        <button class="upgrade-btn" onclick="equipFromInventory(${i})">Equip</button>
+        <button class="loot-bag-btn" onclick="toggleBagCompare(${i})">${isExpanded ? "Hide" : "Compare"}</button>
+        <button class="reset-btn" onclick="salvageFromInventory(${i})">🪙 ${formatNum(getSalvageValue(item))}</button>
+      </div>
+    </div>`;
+  }).join("");
+}
+
+export function equipFromInventory(index) {
+  const entry = state.inventory[index];
+  if (!entry) return;
+  const item = equipment.find(e => e.id === entry.itemId);
+  if (!item) return;
+  const previous = state.equipped[item.slot];
+  state.equipped[item.slot] = item;
+  state.removeFromInventory(index);
+  if (previous) state.addToInventory(previous.id); // swapped-out piece returns to the bag, not lost
+  renderEquipment();
+  renderInventory();
+  renderStats();
+  renderUnitCosts();
+  showToast("⚔️ Equipped!", item.name + " is now active.");
+  saveGame();
+}
+
+export function salvageFromInventory(index) {
+  const entry = state.inventory[index];
+  if (!entry) return;
+  const item = equipment.find(e => e.id === entry.itemId);
+  const sv = item ? getSalvageValue(item) : 0;
+  state.addGold(sv); state.addTotalGoldEarned(sv);
+  state.removeFromInventory(index);
+  updateGold(); flashGold(); renderInventory();
+  showToast("⚗️ Salvaged", (item?.name || "Item") + " → +" + formatNum(sv) + "g");
+  saveGame();
 }

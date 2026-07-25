@@ -135,7 +135,16 @@ export function showShopTab(sub) {
   ["weapons","units"].forEach(s => {
     document.getElementById("subtab-" + s).style.display = s === sub ? "block" : "none";
   });
-  document.querySelectorAll(".sub-tab-btn").forEach((btn, i) => {
+  document.querySelectorAll("#tab-shop .sub-tab-btn").forEach((btn, i) => {
     btn.classList.toggle("active", i === ["weapons","units"].indexOf(sub));
+  });
+}
+
+export function showGearTab(sub) {
+  ["equipped","bag"].forEach(s => {
+    document.getElementById("subtab-" + s).style.display = s === sub ? "block" : "none";
+  });
+  document.querySelectorAll("#tab-gear .sub-tab-btn").forEach((btn, i) => {
+    btn.classList.toggle("active", i === ["equipped","bag"].indexOf(sub));
   });
 }

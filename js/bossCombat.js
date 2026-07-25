@@ -5,9 +5,14 @@
 // timers and never feeds into those calculations.
 //
 // Idle-safety: the boss-attack timer only *schedules* windups on boss floors, but
-// resolution checks state.lastPlayerActionTime before applying any penalty. If the
-// player hasn't interacted (click/attack) recently, the swing auto-resolves as
-// dodged — an away/idle/offline player is never punished by this system.
+// resolution checks whether the tab is visible/focused (recentlyActive()) before
+// applying any penalty. An away/backgrounded/offline tab auto-resolves as dodged.
+// Previously this checked click recency instead (last click within 8s) — that
+// punished/rewarded based on click cadence rather than actual presence: a player
+// watching a fight but pacing clicks slower than 8s got real misses silently
+// no-op'd, which read as unexplained HP regen (player report, 2026-07-25:
+// "I can watch the boss attack me without losing any HP... as soon as I attack
+// again, I regain the HP back"). Tab focus is what "away" actually means here.
 // ─────────────────────────────────────
 import * as state from "./state.js";
 import { showToast } from "./toast.js";
@@ -17,7 +22,6 @@ import { getVoidRiskBossAttackSpeedMult } from "./voidFragments.js";
 
 const WINDUP_MS = 1400;        // telegraph duration before the boss "strikes"
 const ATTACK_INTERVAL_MS = 5000; // time between boss attack attempts while a boss fight is active
-const IDLE_THRESHOLD_MS = 8000;  // no player action within this window => treat as away, auto-dodge
 const MISS_GOLD_PENALTY = 0.05;  // mild, not run-ending: lose 5% of current gold on a missed dodge
 
 let attackTimer = null;
@@ -39,17 +43,26 @@ export function renderPlayerHP() {
   if (!wrap) return;
   if (!active) { wrap.style.display = "none"; return; }
   wrap.style.display = "flex";
-  const pct = (state.playerHP / state.PLAYER_MAX_HP) * 100;
+  const maxHP = state.getPlayerMaxHP();
+  const pct = (state.playerHP / maxHP) * 100;
   fill.style.width = pct + "%";
-  text.textContent = "❤️ " + state.playerHP + " / " + state.PLAYER_MAX_HP;
+  text.textContent = "❤️ " + state.playerHP + " / " + maxHP;
 }
 
 export function isBossCombatActive() {
   return active;
 }
 
+// "Recently active" is meant to mean "not away/idle/offline" (see file header), not "clicked in
+// the last few seconds" — a player who's actively watching a boss fight but pacing their clicks
+// slower than IDLE_THRESHOLD_MS was getting real misses silently no-op'd, which read as
+// unexplained HP regen (player report, 2026-07-25: "I can watch the boss attack me without
+// losing any HP... as soon as I attack again, I regain the HP back"). The tab being visible and
+// focused is the actual signal for "the player is here," independent of click cadence — a
+// genuinely away/backgrounded/offline tab is what this check exists to protect, not someone
+// who's simply not spamming clicks every few seconds.
 function recentlyActive() {
-  return Date.now() - state.lastPlayerActionTime < IDLE_THRESHOLD_MS;
+  return !document.hidden && document.hasFocus();
 }
 
 function clearTimers() {
@@ -57,15 +70,9 @@ function clearTimers() {
   attackTimer = null; windupTimer = null;
 }
 
-// Called from combat.js whenever the player clicks/attacks, so this module can tell
-// an actively-playing session apart from an idle/backgrounded tab.
-export function markPlayerAction() {
-  state.setLastPlayerActionTime(Date.now());
-}
-
 export function startBossFight() {
   active = true;
-  state.setPlayerHP(state.PLAYER_MAX_HP);
+  state.setPlayerHP(state.getPlayerMaxHP());
   state.setBossAttackState("idle");
   renderPlayerHP();
   scheduleNextAttack();

@@ -371,3 +371,448 @@ as raw backlog items pending design pass.
     Warlord's Plate + Band of Tempo → +10% attack speed, +5% crit
     chance), giving the new attack-speed/crit items a set identity
     alongside the existing 3. No new mechanics, no save-format changes.
+
+13. **Player HP regen / max-HP source, delivery method undecided.**
+    Reported by Henvacelos (2026-07-25): "you could add hp regen or as
+    ascension bonus or challenges completed, and/or HP potion, not
+    sure, something like it." Not a bug report — a build-variety wish
+    for Boss Combat v1 (`js/bossCombat.js`), where `PLAYER_MAX_HP` is
+    currently a hard-coded constant (4, see `state.js:74`) that fully
+    refills at the start of every boss fight and is otherwise untouched
+    except by the Path of the Reaper's life-steal tier (`combat.js:182`,
+    prestige-gated, weapon-path-specific). There is currently no
+    lifetime/permanent way to raise the pool or heal mid-fight outside
+    that one weapon path.
+
+    **Needs a design pass before implementation** — three candidate
+    delivery mechanisms were suggested, not mutually exclusive, and
+    picking the wrong one risks colliding with the "small, non-run-
+    ending penalty" design intent Boss Combat v1 was built around (see
+    BACKLOG.md #2's review verdict: "mild (not run-ending) penalty on
+    missed dodge... capped by the small HP pool"). Raising the pool too
+    much would blunt that design; a bounded per-run consumable is safer
+    than a permanent stat increase.
+
+    - **Ascension bonus** (a `shardShop` tier, same pattern as
+      `offlineCap`/`offlineMastery` in `prestige.js`): a permanent
+      `+1 PLAYER_MAX_HP` per level, finite/capped like every other
+      shard-shop tier — straightforward to slot in, but permanently
+      trivializes the existing miss-penalty design the more it's
+      leveled, so needs a low cap (e.g. 2-3 levels) if pursued.
+    - **Challenge-completion reward** — would need to violate the Daily
+      Challenge Run's existing, deliberate "no permanent-currency
+      rewards, score/bragging-rights only" rule (BACKLOG.md #6:
+      "to avoid daily-play FOMO pressure"). Not a clean fit without
+      either relaxing that rule (needs an explicit decision, not a
+      side effect of this item) or making the reward one-time/cosmetic
+      instead of a stat.
+    - **HP potion** — cleanest fit architecturally: `js/potions.js`
+      already has a timed-buff pattern (`potionDefs`, `activeBuffs`)
+      that Boss Combat v1 already reads from indirectly. A new potion
+      effect key (e.g. `playerMaxHPBonus` or an instant-heal-on-use
+      rather than a duration buff) would need one new case in
+      `getTotalMult()`'s consumers and `bonusLabel()`, following the
+      exact same shape as the existing 5 potions — smallest, most
+      self-contained option of the three, no cross-system rule
+      conflicts.
+
+    **Recommendation for the eventual design pass:** HP potion is the
+    most self-contained starting point (no conflict with an existing
+    design rule, unlike the challenge-reward option) and could be
+    layered later with a small, capped ascension-bonus tier if more
+    permanent progression is wanted. Not scoped further here — pending
+    a proper design pass before any implementation, per CLAUDE.md rule 1.
+
+    **Follow-up from the same player (2026-07-25):** "could increase
+    the hp to implement what i said and scale with the level,
+    difficulty, like a balance system. A mage at floor 100 with 4 of
+    HP seems strange." This sharpens the ask — it's not just "add *a*
+    source of more HP," it's that `PLAYER_MAX_HP` itself (`state.js:74`)
+    is a flat constant that never scales with floor/tier/prestige at
+    all. Confirmed in `bossCombat.js`: a floor-5 and a floor-100 player
+    face the exact same 4-HP pool and the same 3-miss wipe threshold —
+    only the *gold* penalty scales (it's a % of current gold, not
+    flat), HP does not. This is a legitimate balance gap distinct from
+    (but related to) the delivery-mechanism question above.
+
+    Two sub-questions for the eventual design pass, not resolved here:
+    - **Should the base pool scale automatically** (e.g. +1 max HP
+      every N floors or every tier, mirroring how monster stats already
+      scale via `getMonsterIdentity()`'s tier/scale math in
+      `monsters.js`) **or only through an earned upgrade** (shard-shop
+      tier from above)? Auto-scaling changes the felt difficulty curve
+      of Boss Combat v1 itself — a deliberate rebalance, not just a
+      new item/currency sink — so needs to go through the same design-
+      review treatment BACKLOG.md #2 originally got, not be folded in
+      as a side effect of adding a potion.
+    - Whichever path is chosen, needs a numbers pass against the
+      existing miss-penalty design intent ("mild, not run-ending") so
+      a bigger HP pool doesn't just mean "more misses before the exact
+      same outcome" without adding real depth.
+
+    ---
+
+    **Design pass (2026-07-25). Review verdict: Approve with revisions.**
+
+    Resolving the two sub-questions above with concrete numbers, and
+    settling the delivery-mechanism question from the top of this item.
+
+    **1. Base pool: scale it, but off tier (existing 10-floor bands),
+    not raw floor number.** `getMonsterIdentity()`'s `tier` value
+    (`Math.floor((floor-1)/10)`, `monsters.js`) is already the game's
+    established "how far in are you" unit — monster stats, trophy
+    tiers, and icon recoloring all key off it. Reusing it here means no
+    new progression axis, just one more thing reading the same tier
+    number. Proposed curve: **`PLAYER_MAX_HP = 4 + tier`** (uncapped —
+    tier is already unbounded past 71+, same as monster scaling). Floor
+    5 (tier 0) stays exactly 4 HP (today's live-tested value, unchanged
+    for early game); floor 100 (tier 9) becomes 13 HP — meaningfully
+    less "strange" per the player's own framing, without inventing new
+    balance language.
+
+    Why linear-per-tier and not steeper: the miss penalty is already a
+    *percentage* of current gold (`MISS_GOLD_PENALTY = 0.05`,
+    `bossCombat.js`), which auto-scales with progression on its own —
+    only the HP side was flat. A modest, linear HP increase restores
+    parity between the two penalty types without also making Boss
+    Combat trivially safe at depth (still capped by *some* pool, "mild,
+    not run-ending" intent preserved — just no longer flatly the same
+    3-miss threshold at floor 5 and floor 200).
+
+    Implementation shape (not yet built): `PLAYER_MAX_HP` in `state.js`
+    stops being an exported constant and becomes a function of current
+    tier, computed the same place `getMonsterIdentity()` is already
+    called from (`loadMonster()` in `monsters.js`) — `bossCombat.js`'s
+    `startBossFight()` reads the current value at fight-start (matches
+    existing "fully refills every boss fight" behavior, no new
+    persistent meta-layer, no save-state change).
+
+    **2. Delivery mechanism for *extra* HP on top of the scaled base:
+    HP potion, as originally recommended — confirmed, not revised.**
+    Still the cleanest fit (`potions.js`'s existing timed-buff pattern,
+    no conflict with the Daily Challenge's "no permanent rewards" rule
+    unlike the challenge-reward option). Scope: an instant-heal-on-use
+    potion (not a duration buff like the other 5 — a genuinely
+    different effect shape, consistent with how new equipment items
+    were required to have distinct stat *shapes* in BACKLOG.md #12),
+    healing a flat amount (e.g. +2 HP, capped at the tier-scaled max)
+    on drink, consumed immediately rather than added to `activeBuffs`.
+
+    **3. Ascension bonus tier: deferred, not rejected.** With the base
+    pool now scaling automatically, a permanent shard-shop HP tier is
+    lower-priority — the original "seems strange to have 4 HP at floor
+    100" complaint is substantially addressed by #1 alone. Revisit only
+    if playtesting after #1+#2 ship shows depth is still too punishing;
+    don't build all three at once.
+
+    ✅ **SHIPPED (2026-07-25).** `state.js`'s `PLAYER_MAX_HP` constant
+    replaced with `getPlayerMaxHP()` — `4 + tier` (`PLAYER_BASE_HP = 4`,
+    tier computed the same way `getMonsterIdentity()` does). All 3 call
+    sites updated (`bossCombat.js`'s `renderPlayerHP()`/`startBossFight()`,
+    `combat.js`'s life-steal check) — `setPlayerHP()`'s existing clamp
+    now clamps against the live tier-scaled max instead of a constant.
+    Added "Healing Tonic" to `js/potions.js`'s `potionDefs` — a new
+    `instantHeal:2` effect key, special-cased in `buyPotion()` to heal
+    immediately (capped at current max HP) and never touch
+    `activeBuffs`, distinct from every other potion's timed-duration
+    shape. `bonusLabel()` (`utils.js`) gained an `instantHeal` case
+    ("+2 HP (instant)") instead of falling through to the generic
+    percentage-based default. `renderPotionShop()`'s duration suffix
+    is now conditional (`def.duration > 0`) so the 0-duration Healing
+    Tonic doesn't render a nonsensical "— 0s". No save-format changes —
+    max HP is derived from `currentFloor` (already saved), not stored
+    separately. Ascension-bonus tier (option 3) intentionally not
+    built — deferred per the design pass above.
+
+14. **Cache-busting for JS module imports.** Not a feature — a
+    reliability fix. Stale browser/CDN caching of individual `js/*.js`
+    files (each `import "./x.js"` is cached independently by the
+    browser, separate from the entry `<script>` tag) caused real
+    confusion at least 3 times: twice with Henvacelos (the "flame/feral
+    icon merge" report and the itch.io download-vs-play-in-browser
+    confusion) and once in-session verifying BACKLOG.md #13 (HP bar
+    showing "NaN/undefined", Healing Tonic not appearing — both
+    resolved by a hard refresh, not a code fix). A version bump alone
+    never forced a re-fetch of every module, only whichever the
+    browser happened to already consider stale.
+
+    ✅ **SHIPPED (2026-07-25).** New `scripts/stamp-versions.js` —
+    reads `package.json`'s version and appends `?v=<version>` to every
+    relative `from "./x.js"` import across `js/*.js`, plus the entry
+    `<script type="module" src="js/main.js">` tag. Runs only as a
+    build step against a **copy** of the repo during deploy
+    (`.github/workflows/deploy.yml`'s GitHub Pages job now builds into
+    a new `pages-build/` folder instead of uploading the raw checkout
+    directly; the itch.io job's existing `itch-build/` folder gets the
+    same treatment) — local source files in `js/`/`index.html` are
+    never touched, so local dev (`npm run serve`) keeps clean,
+    unversioned import paths. Verified: stamped output passes
+    `node --check` on every file, loads with zero console errors under
+    Playwright, and the local test suite (unaffected, since it runs
+    against unstamped source) still passes 19/19.
+
+15. **Salvage value never rebalanced against the gold curve.** Flat
+    `salvageValue` (100/500/2500g per rarity) was worth roughly 1/3 of
+    a single floor-20 boss kill, and became literally negligible by
+    floor 100+ (a single kill nets 800k+ gold at that depth) — "salvage"
+    had quietly become "discard with an irrelevant number attached,"
+    since the values were set once and never rebalanced against the
+    exponential gold curve monster rewards already scale by.
+
+    ✅ **SHIPPED (2026-07-25).** Added `getSalvageValue(item)` in
+    `js/equipment.js` — scales `item.salvageValue` by the same `1.8×`
+    per-tier curve monster gold rewards already use
+    (`monsters.js`/`stats.js`), so a legendary salvaged at floor 100 is
+    worth a meaningful fraction of what you're actually earning there,
+    not a fixed number set for floor-1-20 balance. All 4 salvage call
+    sites (`rollLoot`'s duplicate-auto-salvage, `discardPendingLoot`,
+    the Bag list's salvage button, `salvageFromInventory`) now read
+    through this function instead of the raw flat value.
+
+16. **"BAG"/"EQUIPPED" compare tags cramped inside the item card.**
+    Reported during testing (2026-07-25): the compare-panel tag text
+    ("BAG" / "EQUIPPED") sat squeezed against the item name inside a
+    narrow fixed-width column, especially cramped once "NOW" was
+    relabeled to the longer "EQUIPPED" per player feedback.
+
+    ✅ **SHIPPED (2026-07-25).** Reworked `.loot-compare-row` in
+    `index.html`: the tag now renders as a small pill positioned over
+    the top-left corner of the item card (`position: absolute`) rather
+    than sharing horizontal space with the name/bonus text in a
+    cramped fixed-width flex column. Applies identically to both the
+    loot pop-up's compare section and the Bag tab's inline compare
+    panel, since both reuse the same `compareRowsHtml()` markup
+    (`equipment.js`).
+
+17. **Stale `weaponBonus` never reset on Ascend — real, confirmed
+    bug.** Reported by a player (2026-07-25): gaining 1 HP back after
+    attacking during a Lich King fight, reproduced consistently even
+    while continuously clicking (ruling out the idle-detection theory
+    from #13/#14's session), with no potions active, no life-steal
+    gear, no unspent-shard purchases (72 shards sitting unspent).
+
+    Root cause: `state.js`'s `weaponBonus` object (accumulates
+    `critChance`/`critMult`/`dpsMult`/`executeBonus`/`lifeSteal` from
+    Duelist/Channeler/Reaper weapon-path tier purchases) carries an
+    inline comment claiming it "resets on ascend" — but `doAscend()`
+    in `prestige.js` only ever reset `weaponsBought` and
+    `selectedWeaponPath`, never the separate `weaponBonus` object
+    itself. Any stat accumulated from a weapon path on a past run
+    (e.g. Reaper's life-steal) silently persisted forever across every
+    future Ascend, independent of which path was picked afterward or
+    what gear was equipped — exactly matching the report (Brute path,
+    no gear life-steal, no shard purchases, yet life-steal still
+    procced from a stale earlier-run value).
+
+    ✅ **SHIPPED (2026-07-25).** `doAscend()` now explicitly calls
+    `state.setWeaponBonus({ critChance: 0, critMult: 0, dpsMult: 0,
+    executeBonus: 0, lifeSteal: 0 })` alongside the existing
+    `weaponsBought`/`selectedWeaponPath` resets. Fixes the leak for all
+    future Ascends; a run already carrying a stale value needs one
+    more real Ascend to clear (confirmed acceptable — verifying via a
+    real Ascend rather than a manual state edit, since the player was
+    already past floor 20).
+
+    **Verified (2026-07-25):** player Ascended for real, re-picked
+    Brute path, resumed boss fights — confirmed no more HP regen on
+    attack. Root cause and fix both confirmed correct.
+
+    Also fixed in the same session, unrelated root cause but same
+    testing pass — `bossCombat.js`'s idle-detection check
+    (`recentlyActive()`) was keyed on click recency (last click within
+    8s) rather than tab focus/visibility, which could independently
+    cause real misses to silently no-op during normal slower-paced
+    play. Not the cause of this particular report (ruled out once the
+    player confirmed continuous clicking still reproduced it), but a
+    real second issue worth having fixed regardless — see the
+    `recentlyActive()` rewrite in `bossCombat.js` (now checks
+    `!document.hidden && document.hasFocus()`), with the now-unused
+    `markPlayerAction`/`lastPlayerActionTime` tracking removed from
+    `state.js`/`combat.js`/`main.js`.
+
+18. **Loot pop-up blocks all future drops while it's open — no auto-
+    discard/timeout.** Reported by a player (2026-07-25): if a loot
+    pop-up is left open on screen, idle/passive DPS and potion-boosted
+    auto-clicks keep killing bosses in the background, but **no new
+    loot roll happens at all** until the open pop-up is resolved
+    (Equip/Bag/Discard) — confirmed in code, not a misunderstanding:
+    `combat.js`'s boss-kill branch gates the entire roll behind
+    `if (state.pendingLoot === null)`. A player who walks away with the
+    pop-up open (or just doesn't notice it) is silently missing loot
+    from every boss kill in the meantime, with no feedback that
+    anything was skipped.
+
+    Real tradeoff to design around, not a one-line fix: this exact
+    gate is what BACKLOG.md #12/#13's earlier "always silently bag it,
+    no pop-up" version avoided entirely, but that version got reverted
+    because the player specifically wanted the pop-up back with a
+    genuine 3-way Equip/Bag/Discard choice (see this file's Bag/
+    Inventory system entries above). Bringing the choice back
+    necessarily reintroduces *some* form of "what happens to the next
+    drop while a choice is pending" question — the player's own
+    suggestion (a timer that auto-resolves the pop-up after N seconds)
+    is one reasonable answer, not the only one.
+
+    Needs a design pass before implementation. Candidate directions,
+    not decided here:
+    - **Auto-timeout on the pop-up** (player's suggestion): after N
+      seconds unattended, auto-resolve to a default action (most likely
+      "Place in Bag," since that's the safest/least-destructive default
+      — never auto-discard on a timer, that risks silently salvaging
+      something valuable the player would have kept). Needs a visible
+      countdown so it doesn't feel like a surprise.
+    - **Queue additional drops instead of blocking them.** Let
+      `rollLoot()` keep rolling even while a pop-up is open, queueing
+      results, and show them one at a time as each is resolved (or bulk
+      -offer them together). More faithful to "nothing should be
+      missed," but a queue-of-modals UX needs its own care (could turn
+      into pop-up spam during a fast idle-clear).
+    - **Only gate the modal, not the roll** — silently auto-bag
+      (today's pre-revert behavior) any drop that occurs *while a pop-
+      up is already open*, and only show the pop-up for the "next"
+      drop once the current one resolves. Simplest change (one
+      condition tweak), and arguably the least surprising: the item
+      isn't lost, it just doesn't interrupt with its own pop-up on top
+      of an existing one.
+
+    No implementation yet — flagged for the next backlog session.
+
+---
+
+## Feedback batch (2026-07-25) — external playtester report
+
+Sourced from a written feedback/design-suggestion report (not
+Henvacelos — a different player/tester). Cross-checked against the
+current codebase and prior BACKLOG entries below before logging, per
+the "analyze new feedback" workflow — some items are genuinely new,
+one overlaps a fix already shipped this session, one may be a
+misunderstanding of an existing deterministic mechanic rather than a
+bug.
+
+19. **Gold-loss half of the miss penalty never got the same
+    progression-aware treatment as the HP half.** Report: "losing
+    accumulated resources when taking a hit becomes overly punitive in
+    advanced stages... undoing time and effort spent farming."
+
+    **Partially already addressed, partially new.** BACKLOG.md #13
+    already fixed the *HP* side of this exact complaint (max HP now
+    scales with tier instead of a flat 4). What's NOT yet addressed:
+    `bossCombat.js`'s `MISS_GOLD_PENALTY = 0.05` (5% of *current* gold)
+    is percentage-based, which sounds progression-safe but isn't
+    fully — it doesn't distinguish "gold you're about to spend anyway"
+    from "gold you've been hoarding to afford a big purchase," so a
+    miss at the exact moment you've stockpiled toward an expensive
+    unit/upgrade can feel disproportionately painful even though the
+    percentage itself hasn't changed. The player's suggested fix
+    ("replace resource loss with HP+regen") is really asking to drop
+    the gold-loss half entirely, not just rebalance it — a bigger
+    design call than #13 made (which kept both penalties, just scaled
+    HP).
+
+    **Needs a design pass, not decided here:**
+    - Keep both penalties as-is (current state) — the % scaling was a
+      deliberate choice (see BACKLOG.md #2's original review verdict:
+      "mild, not run-ending"), and HP is now progression-aware too.
+    - Drop the gold penalty entirely, keep only the (now-scaling) HP
+      loss — matches the player's actual ask, simplest change, but
+      removes an existing risk/reward lever without a replacement.
+    - Add HP regen (over time, or on kill) as the player suggested,
+      **on top of** keeping both penalties as a mitigation rather than
+      a replacement — closer to "smooths the punishment" than "removes
+      it."
+    Not implemented — flagged for the next design pass.
+
+20. **Dodge mechanic reported as inconsistent — likely a
+    discoverability gap, not a broken mechanic.** Report: "no clear
+    criteria... regardless of how fast the player clicks or how quick
+    their reflexes are, they still take unavoidable damage."
+
+    **Investigated, likely NOT a bug.** `bossCombat.js`'s dodge is
+    fully deterministic, zero RNG: press Dodge (button or `D` key)
+    while `bossAttackState === "windup"` (a 1.4s telegraph window,
+    shrinking to as low as ~1.08s at max Void Risk via
+    `getVoidRiskBossAttackSpeedMult()`) → always succeeds, no roll, no
+    hitbox, no click-speed dependency at all. The player's framing
+    ("fast clicking," "reflexes," "i-frames," "hitbox precision") reads
+    like they may be modeling this as an action-game reflex/twitch
+    mechanic, when it's actually a simple "press this specific button
+    within a visible window" mechanic — a different mental model
+    entirely. Possible real gap underneath the misunderstanding: is the
+    telegraph (⚠️ pulsing icon per `js/main.js`'s existing UI) visually
+    obvious enough, and is there anywhere in-game that explains "dodge
+    is a deliberate button press, not a reflex/speed check"? Worth a
+    small clarity pass (e.g. a one-time tooltip/tutorial toast the
+    first time a boss fight starts) rather than touching the mechanic
+    itself, which already works as designed. Not implemented — needs
+    confirmation this is really a UX-clarity issue before spending
+    effort on it.
+
+21. **Difficulty curve has no ceiling or new content past floor
+    200 — confirmed real, genuinely new.** Report: "very sharp spike
+    in difficulty after floor 200... prevents smooth progression."
+
+    Confirmed mathematically: `monsters.js`'s `getMonsterIdentity()`
+    scales both monster stats AND (since BACKLOG.md #13) player max HP
+    by `1.8^tier`, completely uncapped — floor 200 is tier 19, i.e.
+    `1.8^19` ≈ 156,000× base stats, with no new mechanic, unit, or
+    upgrade tier introduced past whatever currently exists to keep
+    pace. Nothing in ROADMAP.md or BACKLOG.md currently addresses this
+    — genuinely new, not covered by any parked design doc.
+
+    Candidate directions, not decided or scoped here:
+    - Flatten the exponential curve at some point (e.g. switch from
+      pure `1.8^tier` to a slower-growing function past a threshold
+      tier) — purely a numbers change, no new content, but a real
+      rebalance of every existing tier past that point.
+    - Introduce new unit/weapon/upgrade tiers gated deep enough to
+      keep pace with the curve instead of flattening it (keeps the
+      "number goes up forever" idle-game feel, but is ongoing content
+      work, not a one-time fix).
+    - Some combination: flatten growth *and* add periodic new power
+      tiers, so progression stays smooth without the curve needing to
+      do all the work forever.
+    Needs a real design pass (numbers modeling against the existing
+    curve) before any of these get scoped further.
+
+22. **Soul Shards / Void Fragments have no sink once fully
+    upgraded — confirmed real, genuinely new.** Report: "lack of
+    utility or progression paths to spend high-tier resources."
+
+    Confirmed: every `shardShop` tier (`prestige.js`) and every
+    `voidShop` tier (`voidFragments.js`) is finite (`max: 1` to `10`
+    depending on tier) — once maxed, both currencies have literally
+    nothing left to spend on. This is a real, structural gap distinct
+    from BACKLOG.md #5's original Void Fragments design (which was
+    scoped as "Run Rules," a deliberately small, capped first pass —
+    see that entry's review verdict), not a regression.
+
+    Candidate directions per the report's own suggestions (permanent
+    upgrades, cosmetics, map modifiers, exclusive content), not scoped
+    or decided here — needs its own design pass, likely sizeable enough
+    to warrant a doc similar to ITEMIZATION_REDESIGN.md rather than a
+    single BACKLOG entry, given "map modifiers"/"exclusive content"
+    implies new systems, not just new shop rows.
+
+23. **Procedural "Abyss Mode" / online multiplayer — long-term,
+    out of scope for now.** Report frames this explicitly as
+    "after polishing the core game" / "long-term vision," not an
+    immediate ask.
+
+    Two very different asks bundled together:
+    - **Procedural/infinite endgame mode** — conceptually adjacent to
+      the existing Daily Challenge Run (`js/challenge.js`,
+      `js/prng.js`'s seeded PRNG already exists) and to BACKLOG.md
+      #21's difficulty-curve problem above (an "Abyss" mode is one
+      possible answer to "what's the endgame loop," alongside just
+      fixing the curve). Feasible within this project's existing
+      architecture (no backend needed) — a real future roadmap
+      candidate, not scoped further here.
+    - **Online multiplayer** — a fundamentally different scale of
+      work, same category of decision as cloud save (ROADMAP.md:
+      "explicitly declined for now... would need a backend/auth
+      system"). Not a small feature; would need real infrastructure
+      this project doesn't have and previously chose not to build.
+    Not implemented, not scoped — logged as a long-term idea per the
+    report's own framing, not a near-term backlog item. Revisit only
+    once nearer-term items (bug fixes, the #21/#22 endgame gaps) are
+    further along.

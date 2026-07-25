@@ -20,6 +20,7 @@ export function bonusLabel(key, val) {
     case "critChance":   return "+" + pct + "% crit chance";
     case "critMult":     return val + "× crit damage";
     case "attackSpeedMult": return "+" + pct + "% attack speed";
+    case "instantHeal":  return "+" + val + " HP (instant)";
     default:             return "+" + pct + "% " + key;
   }
 }

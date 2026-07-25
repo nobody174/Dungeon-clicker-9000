@@ -1,6 +1,8 @@
 // ─────────────────────────────────────
 // Potions (consumable timed buffs)
-// effect keys map onto getTotalMult() keys, except "autoClick" which is handled in the tick loop.
+// effect keys map onto getTotalMult() keys, except "autoClick" which is handled in the tick loop,
+// and "instantHeal" (BACKLOG.md #13) which is a one-shot player-HP heal consumed immediately in
+// buyPotion() below — never added to activeBuffs, since it has no duration to track.
 // ─────────────────────────────────────
 import * as state from "./state.js";
 import { formatNum, bonusLabel } from "./utils.js";
@@ -10,6 +12,7 @@ import { checkAchievements } from "./achievements.js";
 import { saveGame } from "./save.js";
 import { renderStats, updateGold } from "./ui.js";
 import { pruneExpiredBuffs } from "./stats.js";
+import { renderPlayerHP } from "./bossCombat.js";
 
 export const potionDefs = [
   { id:"goldRush",    name:"Gold Rush Elixir",  icon:"🍯", flavor:"The air smells like coin.",          effect:{ goldMult:0.50 },              duration:60,  baseCost:150,  costScale:1.6 },
@@ -17,6 +20,7 @@ export const potionDefs = [
   { id:"swiftTonic",  name:"Swiftness Tonic",   icon:"🧪", flavor:"Time feels thinner.",                 effect:{ dpsMult:0.60 },                duration:60,  baseCost:180,  costScale:1.6 },
   { id:"luckyDraught",name:"Lucky Draught",     icon:"🍀", flavor:"Fortune favors the buzzed.",          effect:{ critChance:0.15, critMult:5 }, duration:40,  baseCost:300,  costScale:1.7 },
   { id:"frenzyVial",  name:"Frenzy Vial",       icon:"⚗️", flavor:"Your hands move before you think.",   effect:{ autoClick:3 },                 duration:30,  baseCost:400,  costScale:1.8 },
+  { id:"healingTonic",name:"Healing Tonic",     icon:"❤️‍🩹", flavor:"Mends flesh, if not pride.",         effect:{ instantHeal:2 },               duration:0,   baseCost:250,  costScale:1.5 },
 ];
 
 export function getPotionCost(id) {
@@ -36,6 +40,20 @@ export function buyPotion(id) {
   state.addGold(-cost);
   state.potionsBought[id] = (state.potionsBought[id] || 0) + 1;
   state.incTotalPotionsBought();
+
+  if (def.effect.instantHeal) {
+    // One-shot heal, not a timed buff — never touches activeBuffs, nothing to expire/track.
+    const healed = Math.min(def.effect.instantHeal, state.getPlayerMaxHP() - state.playerHP);
+    state.setPlayerHP(state.playerHP + def.effect.instantHeal);
+    renderPlayerHP();
+    updateGold();
+    renderPotionShop();
+    playBuySound();
+    showToast(def.icon + " " + def.name, healed > 0 ? "Healed " + healed + " HP." : "Already at full HP.");
+    checkAchievements();
+    saveGame();
+    return;
+  }
 
   const existing = state.activeBuffs.find(b => b.defId === id);
   const now = Date.now();
@@ -93,13 +111,14 @@ export function renderPotionShop() {
     const cost = getPotionCost(def.id);
     const canAfford = state.gold >= cost;
     const effectStr = Object.entries(def.effect).map(([k,v]) => k === "autoClick" ? ("+" + v + " auto-clicks/sec") : bonusLabel(k, v)).join(", ");
+    const durationStr = def.duration > 0 ? " — " + def.duration + "s" : "";
     const btn = document.createElement("button");
     btn.className = "upgrade-btn";
     btn.onclick = () => buyPotion(def.id);
     btn.innerHTML = `
       <span class="btn-left">
         <span class="btn-name">${def.icon} ${def.name}</span>
-        <span class="btn-effect">${effectStr} — ${def.duration}s</span>
+        <span class="btn-effect">${effectStr}${durationStr}</span>
       </span>
       <span class="btn-right">
         <span class="btn-cost" style="color:${canAfford ? "#c9a84c" : "#664"}">🪙 ${formatNum(cost)}g</span>
