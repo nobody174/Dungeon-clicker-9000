@@ -16,7 +16,7 @@ import { saveGame, loadGame, exportSaveString, importSaveString } from "./save.j
 import { renderActiveBuffs } from "./potions.js";
 import { loadMonster } from "./monsters.js";
 import { updateGold } from "./ui.js";
-import { dodge, renderPlayerHP } from "./bossCombat.js";
+import { dodge, renderPlayerHP, forceMissForTest } from "./bossCombat.js";
 import { startChallenge, endChallenge, exitChallengeEarly, closeChallengeResult, isChallengeRunning } from "./challenge.js";
 import { buyVoidUpgrade, setVoidRiskLevel } from "./voidFragments.js";
 import { devAddGold, devSetFloor, devAddPrestige, devSetClickDamage, devRestoreClickDamage, isDevOneShotActive, devMaxMastery, devKillBoss } from "./dev.js";
@@ -141,6 +141,10 @@ window.__setClickDamage = state.setClickDamage;
 window.__setCurrentFloor= state.setCurrentFloor;
 window.__loadMonster    = loadMonster;
 window.__saveGame       = saveGame;
+window.__lootQueueLen   = () => state.lootQueue.length;
+window.__dealDamage     = dealDamage; // lets tests land a kill without a real click (blocked by an open modal overlay, same as a real player)
+window.__forceMiss      = forceMissForTest; // lets tests force a boss-combat miss without waiting on real 5s/1.4s timers
+window.__playerHP       = () => state.playerHP;
 
 // ─────────────────────────────────────
 // Main loops

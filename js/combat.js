@@ -9,11 +9,12 @@ import { initAudio, playClickSound, playKillSound, playBossKillSound } from "./a
 import { updateGold, flashGold, updateHPBar, shakeScreen } from "./ui.js";
 import { getMonsterIdentity, loadMonster } from "./monsters.js";
 import { triggerPhaseShift } from "./bosses.js";
-import { rollLoot, showLootModal } from "./equipment.js";
+import { rollLoot, queueLoot } from "./equipment.js";
 import { showToast } from "./toast.js";
 import { checkAchievements } from "./achievements.js";
 import { checkHeroUnlocks, checkHeroTrials } from "./heroes.js";
 import { renderTrophyRoom } from "./trophies.js";
+import { hasLostCurrentFight } from "./bossCombat.js";
 
 export function spawnOverlay(cls, dur) {
   const el = document.createElement("div");
@@ -67,9 +68,11 @@ export function spawnPassiveFloats(units) {
   });
 }
 
-export function showKillMsg(amount, isBoss) {
+export function showKillMsg(amount, isBoss, noReward) {
   const el = document.getElementById("kill-msg");
-  el.textContent = (isBoss ? "⚡ BOSS DEFEATED!  +" : "+") + formatNum(amount) + "g";
+  el.textContent = noReward
+    ? "⚡ BOSS DEFEATED — no reward (fight was already lost)"
+    : (isBoss ? "⚡ BOSS DEFEATED!  +" : "+") + formatNum(amount) + "g";
   el.className   = "kill-msg" + (isBoss ? " boss-kill" : "");
   clearTimeout(state.killMsgTimer);
   state.setKillMsgTimer(setTimeout(() => { el.textContent = ""; el.className = "kill-msg"; }, isBoss ? 3000 : 1200));
@@ -114,29 +117,38 @@ export function dealDamage(amount, isClick) {
     const isBoss    = state.currentFloor % 5 === 0;
     const bossFloor = state.currentFloor;
     const scale     = identity.scale;
-    const earned    = applyGoldMult(Math.floor((isBoss ? identity.baseGold * 3 : identity.baseGold) * scale));
 
-    state.addGold(earned);
-    state.addTotalGoldEarned(earned);
-    state.incTotalKills();
-    if (isBoss) {
-      state.incBossKills();
-      if (state.activeBuffs.length === 0) state.incBossKillsWithoutPotion(); // Hero Trials: Vex's negative-condition trial
-      state.recordBossTrophy(identity.baseIndex, bossFloor); // Boss Trophy Room
-      renderTrophyRoom();
+    // BACKLOG.md #19/#24 (revised 2026-07-26): if the player already hit 0 HP this boss fight,
+    // they've "lost" it — the boss must still be killed to advance (no skip), but this specific
+    // kill grants no gold/loot/kill-count/trophy/trial credit, distinct from a normal boss kill.
+    const fightWasLost = isBoss && hasLostCurrentFight();
+    const earned = fightWasLost ? 0 : applyGoldMult(Math.floor((isBoss ? identity.baseGold * 3 : identity.baseGold) * scale));
+
+    if (!fightWasLost) {
+      state.addGold(earned);
+      state.addTotalGoldEarned(earned);
+      state.incTotalKills();
+      if (isBoss) {
+        state.incBossKills();
+        if (state.activeBuffs.length === 0) state.incBossKillsWithoutPotion(); // Hero Trials: Vex's negative-condition trial
+        state.recordBossTrophy(identity.baseIndex, bossFloor); // Boss Trophy Room
+        renderTrophyRoom();
+      }
+      updateGold();
+      flashGold();
     }
-
-    updateGold();
-    flashGold();
-    showKillMsg(earned, isBoss);
+    showKillMsg(earned, isBoss, fightWasLost);
 
     if (isBoss) {
       playBossKillSound();
       shakeScreen();
-      if (state.pendingLoot === null) {
+      if (!fightWasLost) {
+        // BACKLOG.md #18: every boss kill now rolls loot regardless of whether a previous drop's
+        // modal is still open — queueLoot() shows it immediately if nothing's pending, otherwise
+        // queues it so it's never silently skipped.
         setTimeout(() => {
           const item = rollLoot(bossFloor);
-          if (item) showLootModal(item);
+          if (item) queueLoot(item);
         }, 1500);
       }
     } else {

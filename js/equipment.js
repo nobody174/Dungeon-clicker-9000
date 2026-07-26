@@ -165,8 +165,39 @@ export function rollLoot(bossFloor) {
   return dropped;
 }
 
+// BACKLOG.md #18: 15s auto-resolve (to Bag, the safest default — never auto-discard) so an
+// unattended modal can't block loot forever; the countdown is visible so it never feels like a
+// surprise. Cleared whenever the modal is dismissed by any means (Equip/Bag/Discard) or replaced
+// by the next queued item.
+const LOOT_TIMEOUT_MS = 8000;
+let lootTimeoutHandle = null;
+let lootCountdownHandle = null;
+
+function clearLootTimers() {
+  clearTimeout(lootTimeoutHandle);
+  clearInterval(lootCountdownHandle);
+  lootTimeoutHandle = null;
+  lootCountdownHandle = null;
+}
+
+// Adds a freshly-rolled drop to the queue. If no modal is currently showing, it becomes the
+// front item and opens immediately; otherwise it waits its turn — nothing is lost or silently
+// auto-bagged just because a previous drop's modal was already open.
+export function queueLoot(item) {
+  const wasEmpty = state.lootQueue.length === 0;
+  state.pushLootQueue(item);
+  if (wasEmpty) showLootModal(item);
+}
+
+function advanceLootQueue() {
+  clearLootTimers();
+  state.shiftLootQueue();
+  const next = state.getPendingLoot();
+  if (next) showLootModal(next);
+  else document.getElementById("loot-modal").style.display = "none";
+}
+
 export function showLootModal(item) {
-  state.setPendingLoot(item);
   const cur      = state.equipped[item.slot];
   const newBonus = Object.entries(item.bonus).map(([k,v]) => bonusLabel(k,v)).join(" • ");
 
@@ -215,44 +246,57 @@ export function showLootModal(item) {
   }
 
   document.getElementById("loot-modal").style.display = "flex";
+
+  clearLootTimers();
+  const bar = document.getElementById("loot-timeout-bar");
+  const label = document.getElementById("loot-timeout-label");
+  const startedAt = Date.now();
+  if (bar) bar.style.width = "100%";
+  if (label) label.textContent = Math.ceil(LOOT_TIMEOUT_MS / 1000) + "s";
+  lootCountdownHandle = setInterval(() => {
+    const elapsed = Date.now() - startedAt;
+    const remaining = Math.max(0, 1 - elapsed / LOOT_TIMEOUT_MS);
+    if (bar) bar.style.width = (remaining * 100) + "%";
+    if (label) label.textContent = Math.max(0, Math.ceil((LOOT_TIMEOUT_MS - elapsed) / 1000)) + "s";
+  }, 100);
+  lootTimeoutHandle = setTimeout(() => {
+    bagPendingLoot(true); // auto-resolve to Bag — the safe, non-destructive default
+  }, LOOT_TIMEOUT_MS);
 }
 
 export function equipPendingLoot() {
-  if (!state.pendingLoot) return;
-  const item = state.pendingLoot;
+  const item = state.getPendingLoot();
+  if (!item) return;
   const previous = state.equipped[item.slot];
   state.equipped[item.slot] = item;
   if (previous) state.addToInventory(previous.id); // swapped-out piece goes to the bag, not lost
-  state.setPendingLoot(null);
-  document.getElementById("loot-modal").style.display = "none";
   renderEquipment();
   renderInventory();
   renderStats();
   renderUnitCosts();
   showToast("⚔️ Equipped!", item.name + " is now active.");
   saveGame();
+  advanceLootQueue();
 }
 
-export function bagPendingLoot() {
-  if (!state.pendingLoot) return;
-  const item = state.pendingLoot;
+export function bagPendingLoot(isAutoTimeout) {
+  const item = state.getPendingLoot();
+  if (!item) return;
   state.addToInventory(item.id);
-  state.setPendingLoot(null);
-  document.getElementById("loot-modal").style.display = "none";
   renderInventory();
-  showToast("🎒 Stored", item.name + " was added to your bag.");
+  showToast(isAutoTimeout ? "⏱️ Auto-stored" : "🎒 Stored", item.name + " was added to your bag.");
   saveGame();
+  advanceLootQueue();
 }
 
 export function discardPendingLoot() {
-  if (!state.pendingLoot) return;
-  const item = state.pendingLoot;
+  const item = state.getPendingLoot();
+  if (!item) return;
   const sv = getSalvageValue(item);
   state.addGold(sv); state.addTotalGoldEarned(sv); updateGold(); flashGold();
-  state.setPendingLoot(null);
-  document.getElementById("loot-modal").style.display = "none";
   showToast("⚗️ Salvaged", item.name + " → +" + formatNum(sv) + "g");
   saveGame();
+  advanceLootQueue();
 }
 
 const SLOT_ORDER = ["weapon", "armor", "ring"];

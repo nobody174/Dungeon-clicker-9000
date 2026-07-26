@@ -45,7 +45,6 @@ export let phaseShiftsTriggered  = 0;
 // ── Equipment / loot ──
 export const equipped = { weapon: null, armor: null, ring: null };
 export let inventory = []; // bag: array of { itemId, acquiredAt } for owned-but-unequipped gear
-export let pendingLoot = null; // item awaiting an Equip/Bag/Discard choice in the loot modal
 
 export function addToInventory(itemId) {
   inventory.push({ itemId, acquiredAt: Date.now() });
@@ -54,7 +53,16 @@ export function removeFromInventory(index) {
   inventory.splice(index, 1);
 }
 export function setInventory(v) { inventory = v; }
-export function setPendingLoot(v) { pendingLoot = v; }
+
+// BACKLOG.md #18: a boss kill used to be silently dropped (no loot roll at all) if a previous
+// drop's pop-up was still open — a player letting the modal sit unattended, or leaving the tab
+// mid-decision, missed every drop in the meantime with no indication anything was skipped.
+// lootQueue holds every drop still waiting on a decision; only the front entry is shown at a
+// time, so nothing is ever rolled-and-discarded just because a modal was already up.
+export let lootQueue = []; // array of dropped items awaiting an Equip/Bag/Discard choice
+export function pushLootQueue(item) { lootQueue.push(item); }
+export function shiftLootQueue() { return lootQueue.shift(); }
+export function getPendingLoot() { return lootQueue.length ? lootQueue[0] : null; }
 
 // ── Potions ──
 export let activeBuffs   = [];
