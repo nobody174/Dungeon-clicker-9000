@@ -1,5 +1,25 @@
 # Dungeon Clicker 9000 — Roadmap & Ideas
 
+## Process/communication decisions (so they aren't re-decided later)
+
+- **Patch-note Patreon posts are public/free, not paywalled.** Decided
+  2026-07-25: a "what changed" post benefits most from reaching
+  prospective/new players (signals an actively maintained project) and
+  existing free players whose own bug reports are being addressed —
+  gating that behind a paywall would cut against both. Keep the
+  **roadmap/direction preview posts** (Template B in
+  PATREON_TEMPLATES.md) supporter-only, as already established — that
+  split (public patch notes, supporter-only speculative previews)
+  stays the rule going forward, not something to re-decide per post.
+- **Terminology: the game's own UI/code call it "Prestige," not
+  "Ascend."** A player corrected this (2026-07-25) — worth a
+  consistency pass at some point: `js/prestige.js`, the Prestige tab
+  label, and `prestigeCount` are all named correctly, but some BACKLOG/
+  CHANGELOG/Patreon-post prose (including this session's own drafts)
+  used "Ascend"/"Ascended" colloquially. Not urgent, but flagged so a
+  future doc/UI pass can standardize on "Prestige" consistently rather
+  than mixing both terms.
+
 ## Planned — future major patch (not scheduled)
 
 **Itemization Overhaul.** Full design doc already written and approved
@@ -18,14 +38,49 @@ expansion within the existing 3-slot/3-rarity system) instead, since
 that's what the immediate player feedback (Henvacelos, 2026-07-23) asked
 for. Revisit this doc when scoping the next major content patch.
 
-**Inventory/Bag system + Gear Loadouts.** Full design doc written,
-not yet approved for a build cycle:
-[INVENTORY_REDESIGN.md](INVENTORY_REDESIGN.md). Part 1: a real bag —
-loot no longer force-auto-salvages anything not strictly better,
-displaced gear returns to the bag instead of being destroyed on equip.
-Part 2 (depends on Part 1 shipping first): named gear loadouts (e.g.
-"Gold Farm" / "Boss Killer") that swap all 3 slots at once. Also not
-started — same reasoning as the itemization overhaul above.
+**Gear Loadouts (Inventory/Bag system Part 2).** Full design doc
+written: [INVENTORY_REDESIGN.md](INVENTORY_REDESIGN.md)'s "Part 2."
+Named gear loadouts (e.g. "Gold Farm" / "Boss Killer") that swap all 3
+slots at once. **Part 1 (the Bag itself) is done — shipped in v1.7.0,
+see below** — so Loadouts is now unblocked and buildable whenever
+picked up next; no longer gated on anything.
+
+**Decisions made during Part 1's build (2026-07-25), logged so they
+aren't re-litigated next time Loadouts or a bigger itemization pass is
+discussed:**
+- **No purchasable/upgradeable bag slots.** Considered and explicitly
+  declined — this game has no crafting/trading economy creating
+  storage-scarcity pressure the way loot-based ARPGs do, so a "pay
+  gold to hold more items" gate would be a fake choice, not a real
+  one. Bag stays unlimited unless localStorage size ever becomes a
+  real, measured problem (see INVENTORY_REDESIGN.md's original
+  estimate: "tens of thousands of items" away from mattering).
+- **Bag lives as a sub-tab under Gear, not a separate top-level tab.**
+  Player feedback during testing: too many top-level tabs. Mirrors the
+  existing Shop → Weapons/Units sub-tab pattern exactly
+  (`showGearTab()` in `js/ui.js`).
+- **Sub-tabs per item slot (Weapon/Armor/Ring) inside the Bag: declined
+  for now, at today's ~19-item count** — would be over-engineering at
+  this scale (a single sorted, slot-grouped list scans fine up to
+  ~20-30 items). Revisit specifically once the Itemization Overhaul
+  ships and the item count/slot list actually grows — don't build the
+  sub-tab structure ahead of knowing the final slot list (today's 3
+  slots vs. the Overhaul's proposed 6), since building it against the
+  wrong shape means redoing it.
+- **Loot pop-up was restored, not kept silent.** An earlier version of
+  this session's build made drops go straight into the Bag with no
+  interrupting pop-up at all — reverted per player feedback ("I want
+  the popup to come back, with equip/discard/bag options"). Final
+  shipped behavior: a 3-way Equip / Place in Bag / Discard choice at
+  drop time, with only an *exact duplicate* of an already-owned item
+  still auto-salvaging silently (no possible use for a second copy).
+- **A real, confirmed bug surfaced and fixed by this rebuild:** salvage
+  value was a flat number (100/500/2500g) that had never been
+  rebalanced against the exponential gold curve — worth roughly 1/3 of
+  a single floor-20 boss kill, and functionally worthless by floor
+  100+. Fixed to scale by the same 1.8×/tier curve monster gold
+  already uses (`getSalvageValue()` in `js/equipment.js`). See
+  BACKLOG.md #15.
 
 **Real Artwork Pass.** Design doc written, not yet approved:
 [ART_UPGRADE.md](ART_UPGRADE.md). Surfaced by a player observation
@@ -46,6 +101,40 @@ for this. BACKLOG.md #11 (export/import save, no backend needed) covers
 the actual player concern ("tied to browser data seems dangerous")
 without the infrastructure cost. Revisit only if there's a concrete
 reason true cross-device sync becomes worth a backend investment.
+
+## Inventory/Bag system + boss combat rebalance — ✅ SHIPPED (2026-07-25), v1.7.0
+
+Full write-ups: BACKLOG.md #13-18 (bug fixes/rebalance) plus the Bag
+system entries. Design doc: [INVENTORY_REDESIGN.md](INVENTORY_REDESIGN.md)
+Part 1 (now done — see decisions logged above under "Gear Loadouts").
+
+- ✅ Bag/Inventory system — sub-tab under Gear, rarity-colored frames,
+  slot-then-rarity sort, inline compare panel reusing the loot modal's
+  layout.
+- ✅ Loot pop-up restored — 3-way Equip / Place in Bag / Discard choice.
+- ✅ Player max HP now scales with floor tier instead of a flat 4.
+- ✅ New Healing Tonic potion (instant heal, distinct from the other 5
+  duration-buff potions).
+- ✅ Salvage value now scales with floor tier — see decision note above.
+- ✅ Fixed: `weaponBonus` (crit/dps/execute/life-steal from weapon-path
+  purchases) was never reset on Ascend, silently persisting across
+  every future run regardless of path/gear — real, confirmed bug,
+  root-caused via player report of unexplained HP regen. BACKLOG.md #17.
+- ✅ Fixed: boss-dodge idle-detection was keyed on click recency
+  instead of tab focus/visibility, causing real misses to occasionally
+  silently no-op during normal play. BACKLOG.md #17.
+- ✅ Fixed: hold-to-attack could get stuck firing if released outside
+  the browser window.
+- ✅ Cache-busting for JS module imports on every deploy
+  (`scripts/stamp-versions.js`) — stops stale-browser-cache reports
+  from being mistaken for real bugs (had happened at least 3 times).
+
+**Known follow-up gap, NOT fixed in this batch — logged for next
+session:** BACKLOG.md #18 — the loot pop-up blocks all further loot
+rolls while it's open (idle/passive DPS kills happening in the
+background during that window currently drop nothing). Needs a design
+pass (candidate directions already written up in BACKLOG.md #18)
+before implementation.
 
 ## Post-launch batch (from player feedback) — ✅ COMPLETE (2026-07-25)
 
