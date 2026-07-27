@@ -5,6 +5,7 @@
 // ─────────────────────────────────────
 import * as state from "./state.js";
 import { getAutoClickRate, getTotalMult, pruneExpiredBuffs, getShardMilestoneMult } from "./stats.js";
+import { formatNum } from "./utils.js";
 import { units, renderUnitCosts } from "./units.js";
 import { toggleMute, setVolumeLevel } from "./audio.js";
 import { showTab, showShopTab, showGearTab, resetGame, flashSaveIndicator, renderStats } from "./ui.js";
@@ -150,6 +151,7 @@ window.__monsterScale   = (floor) => getMonsterIdentity(floor).scale;
 window.__shardMult      = getShardMilestoneMult;
 window.__setTotalShardsEarned = state.setTotalShardsEarned;
 window.__isHoldAttackActive = () => state.holdInterval !== null || state.holdTimeout !== null;
+window.__formatNum = formatNum;
 
 // ─────────────────────────────────────
 // Main loops

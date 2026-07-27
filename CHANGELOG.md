@@ -18,6 +18,13 @@ When you bump the version, update the number in package.json and add an entry be
 
 ---
 
+## [1.9.1] — 2026-07-28
+
+### Fixed
+- **Large numbers (gold, upgrade costs) displayed nonsense past a trillion.** Player report at real, live late-game numbers: `formatNum()` (`js/utils.js`) had no ceiling past "T" — it just kept dividing by `1e12` forever and stamping "T" on the result regardless of actual magnitude, so a gold total like `5644900902728448000` rendered as the broken `5644900902728448000T` instead of a readable number. Extended with named suffixes through Septillion (`Qa` quadrillion, `Qi` quintillion, `Sx` sextillion, `Sp` septillion — matches the genre-standard idle-game convention rather than switching straight to scientific notation, since "12 Septillion" reads as a satisfying reward while "1.2e28" reads as spreadsheet output to most players), then falls back to compact scientific notation (`1.23e+27`) as a correctness safety net for anything beyond that. The reported numbers now correctly show as `5.6Qi` and `9.3Qi`.
+
+---
+
 ## [1.4.0] — 2026-07-13
 
 Content batch of 10 features, each carried through a full design-review

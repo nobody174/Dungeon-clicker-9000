@@ -294,3 +294,33 @@ test('holding the attack button with multiple simultaneous contacts does not sta
   await page.evaluate(() => window.stopAttackHold());
   expect(await isActive()).toBe(false);
 });
+
+// Player report (2026-07-28): formatNum had no ceiling past "T" (trillion) — it just kept
+// dividing by 1e12 forever and stamping "T" on the result regardless of actual magnitude, so a
+// save already deep enough displayed nonsense like "5644900902728448000T" instead of a readable
+// number. Extended with named suffixes through Septillion (matches genre-standard idle-game
+// convention — Cookie Clicker, Adventure Capitalist, etc. all use named tiers here, not
+// scientific notation, since "12 Septillion" reads as a satisfying reward while "1.2e28" reads
+// as spreadsheet output to most players), then falls back to scientific notation past that as a
+// correctness safety net for numbers large enough that almost no player will ever see them.
+test('formatNum uses named suffixes through Septillion, then falls back to scientific notation', async ({ page }) => {
+  const format = (n) => page.evaluate((v) => window.__formatNum(v), n);
+
+  expect(await format(999)).toBe('999');
+  expect(await format(1500)).toBe('1.5K');
+  expect(await format(1.5e6)).toBe('1.5M');
+  expect(await format(1.5e9)).toBe('1.5B');
+  expect(await format(1.5e12)).toBe('1.5T');
+  expect(await format(1.5e15)).toBe('1.5Qa'); // Quadrillion
+  expect(await format(1.5e18)).toBe('1.5Qi'); // Quintillion
+  expect(await format(1.5e21)).toBe('1.5Sx'); // Sextillion
+  expect(await format(1.5e24)).toBe('1.5Sp'); // Septillion
+
+  // The exact numbers reported by the player — previously rendered as broken multi-digit "T".
+  expect(await format(5644900902728448000)).toBe('5.6Qi');
+  expect(await format(9339986583048394752)).toBe('9.3Qi');
+
+  // Past Septillion: scientific notation, never a broken/oversized named suffix.
+  const beyond = await format(1.5e27);
+  expect(beyond).toMatch(/^1\.5\d?e\+27$/);
+});
