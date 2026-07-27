@@ -6,6 +6,58 @@ sole historical record — and is removed from here. A commit existing in
 git is not the same as "shipped": an item only leaves this file once
 it's live for players.
 
+## Current status / where things stand (2026-07-28) — read this first next session
+
+- **Blocked on: Google Play Console developer ID verification.** Submitted
+  ID card + (after a second request) passport; told it could take a few
+  days. Nothing else can move on the Play Store side until this clears.
+  Everything else below is ready and waiting for that.
+- **A full local Android test pipeline is set up and working**, separate
+  from this repo (not tracked in git here — its own folder, not yet its
+  own git repo either):
+  - Project folder: `D:\Claude AI Projects\projects\GitHub\dungeon-clicker-android`
+    (Bubblewrap-generated TWA wrapper — Gradle/Android Studio project,
+    points at the game via a live URL, contains no game code itself).
+  - Signing keystore: `android.keystore` in that folder, alias `android`.
+    **Backed up** to `C:\Users\Vartd\Desktop\Learning AI\vscode\android.keystore`
+    — still only on this one machine; a real off-machine backup (cloud/
+    password manager) is still outstanding. Losing this file + its
+    password permanently blocks future updates to whatever Play listing
+    it eventually signs.
+  - Application ID (permanent once published): `io.github.nobody174.dungeonclicker9000`.
+  - The app currently installs and runs correctly on a real Android
+    phone, pointed at `.../Dungeon-clicker-9000/preview/` (the
+    manually-triggered preview deploy path, separate from the real
+    site) — confirmed working end-to-end, including catching and fixing
+    a real multi-touch bug (see CHANGELOG.md 1.9.1) that only surfaced
+    on a real touchscreen.
+  - To test a new build on the phone again: trigger the deploy workflow
+    manually (Actions tab → "Run workflow"), confirm `/preview/js/version.js`
+    shows the expected version, then just reopen the already-installed
+    app on the phone (no rebuild needed — it re-fetches the page live
+    each time). Only rebuild in Android Studio if changing the icon/app
+    name/manifest settings, not for ordinary gameplay code changes.
+  - GitHub Pages `github-pages` environment now explicitly allows `v*`
+    tag deploys (was `main`-branch-only before, fixed 2026-07-28) — a
+    real release should deploy cleanly without needing a manual re-run
+    this time.
+- **v1.9.0 and v1.9.1 are both already live** on GitHub Pages + itch.io
+  (progression rebalance, terminology fix, multi-touch fix, and the
+  large-number display fix) — CHANGELOG.md is fully up to date, nothing
+  from tonight is still sitting held-back.
+- **A GitHub personal access token was briefly exposed in plaintext in
+  git remote URLs earlier this session** — regenerated on GitHub's side
+  immediately, remotes cleaned to plain HTTPS, git auth now goes through
+  GitHub CLI's securely-stored OAuth token instead. Resolved, not an
+  ongoing concern — noted here only so a future session doesn't
+  rediscover this in old chat history and re-raise an already-closed
+  issue.
+- **Next intended step once Play Console access clears:** upload the
+  Android build (bump its internal version code, rebuild via
+  `bubblewrap build` or Android Studio, upload the `.aab` manually —
+  this part is NOT automated by the GitHub Actions workflow, unlike
+  Pages/itch.io) and go through the Play Store listing setup.
+
 ## Process/communication decisions (so they aren't re-decided later)
 
 - **The `github-pages` deployment environment must explicitly allow
