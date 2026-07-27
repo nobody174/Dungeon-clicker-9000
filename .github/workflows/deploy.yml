@@ -1,8 +1,16 @@
-name: CI/CD — Test & Deploy
+name: CI/CD — Test, Preview & Release
+
+# Pushing to main only runs tests — nothing goes public from a plain push anymore.
+# Pushing a version tag (v1.9.0, etc.) is the one deliberate "release" action: it deploys the
+# real GitHub Pages site AND pushes to itch.io. A manual run (workflow_dispatch) instead deploys
+# to a separate, always-current /preview/ path on GitHub Pages — for testing (e.g. wrapping it as
+# an Android app via Bubblewrap) without that being a public release. See ROADMAP.md's
+# "release process" note for why this changed from the old push-to-main-auto-deploys setup.
 
 on:
   push:
     branches: [main]
+    tags: ["v*"]
   workflow_dispatch:
 
 permissions:
@@ -15,7 +23,7 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  # ── Job 1: Run tests ─────────────────────────────────────────
+  # ── Job 1: Run tests — every push to main, every tag push, every manual run ──
   test:
     name: 🧪 Run Tests
     runs-on: ubuntu-latest
@@ -44,10 +52,50 @@ jobs:
           path: playwright-report/
           retention-days: 7
 
-  # ── Job 2: Deploy (only runs if tests pass) ──────────────────
-  deploy:
-    name: 🚀 Deploy to GitHub Pages
+  # ── Job 2: Preview deploy — manual trigger only, never on a plain push/tag ──
+  # Publishes to https://<user>.github.io/<repo>/preview/ instead of the site root, so it never
+  # overwrites (or looks like) the real release — safe to run as often as needed while testing.
+  deploy-preview:
+    name: 🔍 Deploy Preview (manual only)
     needs: test
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+
+      - name: Prepare version-stamped preview build
+        run: |
+          mkdir -p pages-build/preview
+          cp index.html pages-build/preview/
+          cp -r js pages-build/preview/
+          cp manifest.json pages-build/preview/ 2>/dev/null || true
+          cp -r icons pages-build/preview/ 2>/dev/null || true
+          node scripts/stamp-versions.js pages-build/preview
+
+      - name: Upload site
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: "pages-build"
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
+
+  # ── Job 3: Real release — only on a version tag push (v1.9.0, etc.) ──
+  deploy-release:
+    name: 🚀 Release to GitHub Pages
+    needs: test
+    if: startsWith(github.ref, 'refs/tags/v')
     runs-on: ubuntu-latest
     environment:
       name: github-pages
@@ -71,6 +119,8 @@ jobs:
           mkdir -p pages-build
           cp index.html pages-build/
           cp -r js pages-build/
+          cp manifest.json pages-build/ 2>/dev/null || true
+          cp -r icons pages-build/ 2>/dev/null || true
           node scripts/stamp-versions.js pages-build
 
       - name: Upload site
@@ -82,13 +132,12 @@ jobs:
         id: deployment
         uses: actions/deploy-pages@v4
 
-  # ── Job 3: Deploy to itch.io ─────────────────────────────────
+  # ── Job 4: Deploy to itch.io — only on a version tag push, same as the real release ──
   deploy-itch:
-    name: 🎮 Deploy to itch.io
+    name: 🎮 Release to itch.io
     needs: test
+    if: startsWith(github.ref, 'refs/tags/v')
     runs-on: ubuntu-latest
-
-    if: github.ref == 'refs/heads/main'
 
     steps:
       - uses: actions/checkout@v4
