@@ -45,7 +45,12 @@ Agreed build order: 8 → 9 → 1a → 2 → 3 → 4 → 7 → 10 → 6 → 5.
 
 ---
 
-## [1.9.0] — 2026-07-26
+## [1.9.0] — committed, not yet released
+
+Held back deliberately — ready to ship, but the next public release is
+timed to follow the upcoming Google Play Store launch rather than go
+out immediately. Update this header to a real date once actually
+released/pushed live.
 
 Progression-curve rebalance (BACKLOG.md #21/#25), driven by a full
 mathematical modeling pass rather than a guessed coefficient tweak — see
@@ -79,10 +84,6 @@ each fix would have introduced (see design-pass notes below).
 ### Changed
 - **Miss-penalty gold loss now tapers by floor tier instead of a flat 5% forever** (BACKLOG.md #19). A flat percentage-of-current-gold penalty sounds progression-safe but isn't fully — the percentage never changes, but the absolute gold lost keeps growing forever as gold grows, so a late-game player who'd stockpiled toward an expensive purchase could lose a disproportionate chunk in a single miss. `bossCombat.js`'s `getMissGoldPenaltyPct()` now steps the penalty down by ~0.5 percentage points per tier (same 10-floor bands used everywhere else), floored at 1.5% so a miss always costs something at any depth.
 - **Reaching 0 HP now permanently "loses" the current boss fight instead of doing nothing** (BACKLOG.md #24, resolved in the same design pass as #19 since both touch `resolveAttack()`). Previously, HP silently clamped at 0 (`state.setPlayerHP`) while the gold miss-penalty kept firing on every subsequent miss exactly as if HP still mattered — reaching 0 HP changed nothing about the player's situation, which defeated the purpose of the tier-scaled HP pool (1.7.0). Went through two design revisions before landing: an initial idea (end the fight early with no reward, then advance past the boss) was caught and rejected as a real exploit — it would let a player deliberately tank to 0 HP on every boss to skip Boss Combat entirely while farming trash-mob gold and advancing floors. A second draft (silently refill HP and restart the fight in place) shipped briefly but was reverted after manual playtesting — refilling HP meant a struggling player could keep re-entering the same HP/gold risk indefinitely on one hard boss, with no real cap on the downside. The final design: hitting 0 HP sets a `fightLost` flag (`bossCombat.js`) — the boss stops attacking entirely for the rest of that fight (no further HP or gold can be lost), but the player must still land the killing blow to advance; that kill grants no gold/loot/kill-count/trophy/trial credit (`combat.js`'s kill branch checks the new `hasLostCurrentFight()`). This caps the total downside at exactly one lost reward per lost fight, no more, no less. Idle-safety is unaffected: an idle/away player never accumulates real misses in the first place (unchanged `recentlyActive()` check from 1.7.0).
-
----
-
-## [Unreleased]
 
 ---
 
