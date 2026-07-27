@@ -8,6 +8,22 @@ it's live for players.
 
 ## Current status / where things stand (2026-07-28) — read this first next session
 
+- **✅ Repo history cleanup done (2026-07-28): `node_modules/` fully
+  purged from all git history via `git-filter-repo`, not just untracked
+  going forward.** 1,310 third-party dependency files had been committed
+  since `d8fb084` (the original CI/CD setup commit) despite `.gitignore`
+  listing `node_modules/` — the rule only prevented new files, it never
+  retroactively removed what was already tracked. Rewrote all 69 commits
+  to strip the folder entirely; `.git` size dropped ~91% (7.1M → 621K).
+  All 9 version tags survived intact (git-filter-repo automatically
+  re-pointed them to their new commit hashes — no manual tag recreation
+  needed). Verified with a full mirror backup taken first, then a
+  completely fresh clone from GitHub afterward (dependencies installed
+  from scratch, full 26/26 test suite passing) before considering this
+  done. Chosen to do this now rather than defer, specifically because
+  almost no one has cloned the repo yet (pre-Play-Store-launch) — the
+  same cleanup gets meaningfully more disruptive to do later once more
+  clones/forks/CI systems depend on the existing commit history.
 - **Blocked on: Google Play Console developer ID verification.** Submitted
   ID card + (after a second request) passport; told it could take a few
   days. Nothing else can move on the Play Store side until this clears.
