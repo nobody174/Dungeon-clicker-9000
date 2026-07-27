@@ -79,10 +79,15 @@ killing / shield-tank / crit / click-focused / passive DPS / hybrid):
 | `playerMaxHPBonus` | + flat player HP (tank identity, currently nothing modifies `PLAYER_MAX_HP`) | `bossCombat.js` / `state.js` |
 | `offlineGainMult` | + % offline earnings (hybrid/gold-farm identity) | `save.js` offline calc, alongside existing `getOfflineGainMult()` from prestige shop |
 | `potionDurationMult` | potions from `potions.js` last longer | `potions.js` buff-duration calc |
+| `rarityLuck` **(new, 2026-07-27)** | + % chance to roll a higher rarity band on any drop (a genuinely new lever — today's rarity odds are only floor/prestige-gated, never gear-gated) | `equipment.js`'s `rollLoot()`, folded into the rarity-roll step as an additive shift to the legendary/mythic weight, same shape as the existing `prestigeShift` variable |
 
-All five are additive percentages/flats consumed the same way existing
+All six are additive percentages/flats consumed the same way existing
 keys are, no new pipeline architecture — `getTotalMult()` stays a flat
-sum-of-sources function, just with a longer key list.
+sum-of-sources function, just with a longer key list. `rarityLuck` is
+the exception worth flagging: it doesn't feed `getTotalMult()`, since
+it needs to be read at roll-time inside `rollLoot()` specifically, not
+applied as a stat multiplier — same category of "special-cased affix"
+as `missGoldPenaltyReduction` already is today.
 
 ## Set list (8 sets, up from 3)
 
@@ -91,13 +96,20 @@ kept as-is, now spanning the wider slot list where thematically fitting.
 5 new sets to reach 8 total, one per requested archetype:
 
 1. **Voidreaver's Fury** (existing) — crit build.
-2. **Hoarder's Fortune** (existing) — gold farming.
+2. **Hoarder's Fortune** (existing) — gold farming. Confirmed (2026-07-27) as the "pure gold farm" archetype requested — already covers it, no new set needed for this identity.
 3. **Warden's Resolve** (existing) — shield/tank (dodge-miss mitigation).
-4. **Slayer's Vindication** (new) — boss killing. 4pc: weapon/helmet/armor/amulet. Uses new `bossDmgMult`.
+4. **Slayer's Vindication** (new) — boss killing. Confirmed (2026-07-27) as the requested "boss killing, +%dmg to shields/bosses" archetype. 4pc: weapon/helmet/armor/amulet. Uses new `bossDmgMult` (and should read against monster/boss shields specifically, not just raw HP, since shields are already a distinct mechanic in `combat.js`).
 5. **Quickstrike Fury** (new) — click-focused. 3pc: weapon/ring/boots. Pure `clickMult` stacking, no crit overlap with set 1 (distinct identity).
-6. **Endless March** (new) — passive DPS. 3pc: armor/boots/amulet. Pure `dpsMult`, complements existing `dragonscale`/`void_plate` items rather than replacing them.
+6. **Endless March** (new) — passive DPS / "trash killing." Confirmed (2026-07-27) as the requested "clearing regular monsters fast" archetype — pure `dpsMult` is the right shape for this (raw kill speed against non-boss floors), distinct from set 4's boss-specific focus. 3pc: armor/boots/amulet. Complements existing `dragonscale`/`void_plate` items rather than replacing them.
 7. **Ironclad Vow** (new) — shield/tank v2, deeper than Warden's Resolve. 4pc: helmet/armor/boots/ring. Uses new `playerMaxHPBonus` + `damageReduction`.
 8. **Wanderer's Fortune** (new) — hybrid. 4pc: any-slot mixed rarity (deliberately the "no single build" set) — small `goldMult` + small `dpsMult` + small `offlineGainMult`, for players not chasing a single archetype.
+
+All 4 requested archetypes (gold farm, trash-killing, boss-killing,
+plus a rarity/luck-boosting angle) are covered: sets 2, 6, and 4
+respectively, with `rarityLuck` (new affix, see Affix Catalog above)
+available as an item-level roll rather than needing its own dedicated
+set — keeps it flexible enough to slot into any build rather than
+forcing a "luck build" as a 5th fixed archetype.
 
 ### Partial-set tiering (new mechanic)
 
@@ -133,6 +145,28 @@ creep where every new item just replaces the last; players choose based
 on build identity, consistent with `hasDifferentStatShape()`'s existing
 "different shape beats pure salvage" logic in `equipment.js`.
 
+## Item card display format (2026-07-27)
+
+Set-member items should show their set membership directly on the item
+card, not only inside the loot-compare panel where it's shown today.
+Confirmed layout:
+
+```
+[Item Name]
+(Set Name — 1/3)
++X% stat 1
++X% stat 2
+
+Set Bonus: description
+```
+
+Set name + progress (`owned/total`) sits directly under the item name,
+parenthesized, matching the existing "Part of X (n/total equipped)"
+line `equipment.js`'s loot modal already shows — this formalizes that
+same information as a consistent per-item label wherever an item is
+displayed (Bag list, equipped-slot view, loot pop-up), not just in the
+compare panel.
+
 ## Drop tables
 
 Same two-step roll `rollLoot()` already does (rarity roll, then uniform
@@ -166,3 +200,23 @@ dilutes how often any single slot refreshes; no change needed to
    is signed off.
 
 **Waiting for go-ahead before writing the item table or touching code.**
+Deliberately sequenced *after* the progression-curve rebalance
+(BACKLOG.md — difficulty ceiling / floor 21/25 work, shipped v1.9.0,
+2026-07-26) rather than before or alongside it: itemization is an
+additive-bonus expansion, and the balance model showed additive
+expansions delay the divergence wall without fixing it — better to
+tune this doc's item power table once, against the already-corrected
+curve, than tune it now and re-tune after the curve changes shape.
+**The curve fix has now shipped (v1.9.0)** — the sequencing dependency
+this doc was waiting on is cleared; itemization can move forward
+whenever picked up next.
+
+**User's item/affix/set-bonus wishes — captured (2026-07-27).** What
+was flagged as TBD on 2026-07-26 is now folded into this doc: the
+`rarityLuck` affix (Affix Catalog), the gold-farm/trash-kill/boss-kill
+set archetype confirmations (Set list), and the item card display
+format (new section above). Still open: the literal 100-item table
+itself (names, icons, flavor text, exact per-item affix rolls) —
+deliberately not written yet per open question 3 below, since
+finalizing individual items before the slot/rarity/affix architecture
+is signed off risks having to redo them.

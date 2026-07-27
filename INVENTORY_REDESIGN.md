@@ -1,9 +1,12 @@
 # Inventory / Bag System + Gear Loadouts — Design Doc (draft, 2026-07-24)
 
-Status: **DESIGN ONLY — not approved, not built.** Per CLAUDE.md rule 1
-(design first) and rule 5 (ask before touching an already-shipped
-system — this rewrites the loot-roll/auto-salvage flow and the save
-format for `equipped`).
+Status (updated 2026-07-27): **Part 1 (the Bag/Inventory system below)
+✅ SHIPPED, v1.7.0 — see CHANGELOG.md and ROADMAP.md's "Inventory/Bag
+system + boss combat rebalance" entry for the full write-up.** Part 2
+(Gear Loadouts) remains design-only and is explicitly deferred until
+after the Itemization Overhaul ships — see ROADMAP.md/BACKLOG.md's
+content-pipeline entry: not worth building at today's ~19-item count,
+revisit once the item/slot count actually grows.
 
 ## Why this is needed (current behavior)
 
