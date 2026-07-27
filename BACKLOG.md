@@ -383,9 +383,10 @@ endgame content, likely overlapping with item 23's procedural-endgame
 idea).
 
 **Sequencing relative to other open work:** this whole item stays behind
-ITEMIZATION_REDESIGN.md's own sequencing (already noted: itemization
-waits until this curve-fix work — v1.9.0 — is validated) and behind
-Veteran Adventurer/Momentum's own scoping passes. Individual small,
+ITEMIZATION_REDESIGN.md's own sequencing (v1.9.0's curve fix has now
+shipped and is live — see CHANGELOG.md — so that dependency is
+cleared; itemization can move forward whenever picked up next) and
+behind Veteran Adventurer/Momentum's own scoping passes. Individual small,
 low-risk items from the categorized list above (Monster Hunter, Auto
 Commander, Time Compression) can ship independently and out of order
 whenever a quick regular-cadence patch is wanted — they don't depend on

@@ -68,15 +68,6 @@ it's live for players.
   "Ascend" as originally written, since those are dated logs of what
   was said at the time, not live UI text.
 
-## Committed, held back pending the Google Play Store launch
-
-**v1.9.0 — progression-curve rebalance.** Committed to git
-(`8d7391d`), intentionally not pushed/released yet — full technical
-write-up already in [CHANGELOG.md](CHANGELOG.md)'s 1.9.0 entry. Held
-back so the next public release lines up with the upcoming Play Store
-launch rather than going out immediately; update that CHANGELOG entry's
-header to a real date once actually pushed live, and remove this note.
-
 ## Planned — future major patch (not scheduled)
 
 **Itemization Overhaul.** Full design doc written:

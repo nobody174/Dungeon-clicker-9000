@@ -45,12 +45,7 @@ Agreed build order: 8 → 9 → 1a → 2 → 3 → 4 → 7 → 10 → 6 → 5.
 
 ---
 
-## [1.9.0] — committed, not yet released
-
-Held back deliberately — ready to ship, but the next public release is
-timed to follow the upcoming Google Play Store launch rather than go
-out immediately. Update this header to a real date once actually
-released/pushed live.
+## [1.9.0] — 2026-07-28
 
 Progression-curve rebalance (BACKLOG.md #21/#25), driven by a full
 mathematical modeling pass rather than a guessed coefficient tweak — see
