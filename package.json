@@ -1,6 +1,6 @@
 {
   "name": "dungeon-clicker-9000",
-  "version": "1.9.0",
+  "version": "1.9.1",
   "description": "A browser-based dungeon idle game",
   "scripts": {
     "test": "playwright test",

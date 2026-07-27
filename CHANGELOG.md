@@ -45,6 +45,13 @@ Agreed build order: 8 → 9 → 1a → 2 → 3 → 4 → 7 → 10 → 6 → 5.
 
 ---
 
+## [1.9.1] — committed, not yet released
+
+### Fixed
+- **Multi-touch attack exploit/bug: holding the attack button with multiple fingers on a touchscreen permanently increased attack speed, surviving well past release.** Discovered during real-device Android testing (2026-07-28). Root cause: `startAttackHold()`/`stopAttackHold()` (`combat.js`) tracked the hold-repeat loop in single global timer variables — a touchscreen fires an independent `touchstart` per finger on the same element, so placing a 2nd/3rd/4th finger on the button while the 1st was already held each called `startAttackHold()` again, silently overwriting the previous timer ID without ever clearing it. Lifting fingers one at a time then only released whichever timer was *currently* referenced, leaving every earlier, orphaned interval loop running forever in the background with no way left to cancel it — reported as attack speed scaling up with more fingers used and persisting indefinitely (through looting, equipping gear, etc.), only "unsticking" via unrelated coincidental interactions. Fixed by counting active contacts (`activeHoldContacts` in `combat.js`): the hold-loop now only starts on the true first contact and only stops once every contact has released, so extra fingers on the same button are a no-op instead of spawning parallel un-cancellable loops. The existing window-level safety nets (`blur`/`visibilitychange`/`mouseup`, added in 1.7.0 for a related but distinct desktop bug) now call a new `forceStopAttackHold()` that resets the contact counter to zero unconditionally, rather than releasing one contact at a time — needed because those safety nets must fully clear the hold in one call even if multiple contacts were stuck down when focus was lost.
+
+---
+
 ## [1.9.0] — committed, not yet released
 
 Held back deliberately — ready to ship, but the next public release is

@@ -8,7 +8,7 @@ import { getAutoClickRate, getTotalMult, pruneExpiredBuffs, getShardMilestoneMul
 import { units, renderUnitCosts } from "./units.js";
 import { toggleMute, setVolumeLevel } from "./audio.js";
 import { showTab, showShopTab, showGearTab, resetGame, flashSaveIndicator, renderStats } from "./ui.js";
-import { startAttackHold, stopAttackHold, attack, spawnPassiveFloats, dealDamage } from "./combat.js";
+import { startAttackHold, stopAttackHold, forceStopAttackHold, attack, spawnPassiveFloats, dealDamage } from "./combat.js";
 import { openAscendModal, closeModal, doAscend } from "./prestige.js";
 import { equipFromInventory, salvageFromInventory, toggleBagCompare, equipPendingLoot, bagPendingLoot, discardPendingLoot } from "./equipment.js";
 import { levelUpHero } from "./heroes.js";
@@ -149,6 +149,7 @@ window.__playerHP       = () => state.playerHP;
 window.__monsterScale   = (floor) => getMonsterIdentity(floor).scale;
 window.__shardMult      = getShardMilestoneMult;
 window.__setTotalShardsEarned = state.setTotalShardsEarned;
+window.__isHoldAttackActive = () => state.holdInterval !== null || state.holdTimeout !== null;
 
 // ─────────────────────────────────────
 // Main loops
@@ -189,9 +190,13 @@ document.addEventListener("keydown", e => {
 // chain in startAttackHold runs forever with nothing left to clear it — surfacing as "attacks keep
 // happening on their own" until the page is closed and reopened. These window-level listeners
 // catch every path that can end a hold, not just the ones that land back on the button itself.
-window.addEventListener("mouseup",   stopAttackHold);
-window.addEventListener("blur",      stopAttackHold);
-document.addEventListener("visibilitychange", () => { if (document.hidden) stopAttackHold(); });
+// Uses forceStopAttackHold() (clears unconditionally), not stopAttackHold() (releases one
+// tracked contact at a time) — a multi-touch phone report (2026-07-28) had multiple fingers
+// stuck down on the attack button when focus was lost, and a single stopAttackHold() call would
+// only have released one of them, leaving the loop running at a reduced-but-still-wrong speed.
+window.addEventListener("mouseup",   forceStopAttackHold);
+window.addEventListener("blur",      forceStopAttackHold);
+document.addEventListener("visibilitychange", () => { if (document.hidden) forceStopAttackHold(); });
 
 setInterval(renderPlayerHP, 250);
 

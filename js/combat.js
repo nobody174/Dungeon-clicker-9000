@@ -231,8 +231,22 @@ export function getAttackHoldDelay() {
   return Math.max(60, BASE_HOLD_ATTACK_DELAY / speedMult);
 }
 
+// Multi-touch bug (player report, phone testing 2026-07-28): a touchscreen fires a separate
+// touchstart/touchend PER FINGER on the same button, not once per press. Placing a 2nd/3rd/4th
+// finger on the attack button while holding the 1st already down each called startAttackHold()
+// again, which — since holdTimeout/holdInterval were single global timer IDs — silently
+// overwrote the previous timer reference without ever clearing it. Each extra finger stacked one
+// more permanently-uncancellable attack loop running in parallel (2 fingers = 2x attack rate, 4
+// fingers = 4x, forever) since lifting a finger only clears whatever's in the *current* timer
+// variable, not the ones already overwritten and orphaned. Fixed by counting active contacts —
+// the hold-loop only starts on the first contact and only stops once every contact has lifted,
+// so extra fingers on the same button are a no-op instead of spawning parallel loops.
+let activeHoldContacts = 0;
+
 export function startAttackHold(event) {
   initAudio();
+  activeHoldContacts += 1;
+  if (activeHoldContacts > 1) return; // a hold loop is already running — extra fingers are a no-op
   const pos = event.touches ? event.touches[0] : event;
   attack(pos);
   state.setHoldTimeout(setTimeout(() => {
@@ -245,6 +259,19 @@ export function startAttackHold(event) {
 }
 
 export function stopAttackHold() {
+  activeHoldContacts = Math.max(0, activeHoldContacts - 1);
+  if (activeHoldContacts > 0) return; // other fingers/mouse still down — keep the loop running
+  clearTimeout(state.holdTimeout); clearTimeout(state.holdInterval);
+  state.setHoldTimeout(null); state.setHoldInterval(null);
+}
+
+// Force-reset for the window-level safety nets (blur/visibilitychange/mouseup — see main.js).
+// A normal stopAttackHold() only releases one contact at a time, which isn't enough if the tab
+// loses focus while multiple fingers are still down (the same multi-touch scenario the contact
+// counter above exists for) — one blur event needs to fully clear the hold regardless of how
+// many contacts were stacked, not decrement by one and leave the loop running.
+export function forceStopAttackHold() {
+  activeHoldContacts = 0;
   clearTimeout(state.holdTimeout); clearTimeout(state.holdInterval);
   state.setHoldTimeout(null); state.setHoldInterval(null);
 }

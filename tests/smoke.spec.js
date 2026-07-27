@@ -252,3 +252,45 @@ test('shard milestone multiplier doubles every 25 lifetime shards, not linear', 
   await setShards(125);
   expect(await getMult()).toBeCloseTo(32, 5); // 5 milestones hit: 2^5
 });
+
+// Multi-touch bug (player report, Android phone testing 2026-07-28): a touchscreen fires a
+// separate touchstart/touchend PER FINGER on the same button, not once per press. Placing a
+// 2nd/3rd/4th finger on the attack button while the 1st was already held down each called
+// startAttackHold() again, which — since holdTimeout/holdInterval were single global timer IDs —
+// silently overwrote the previous timer without ever clearing it. Lifting fingers one at a time
+// then only released the CURRENT timer reference, leaving every earlier, orphaned interval loop
+// running forever in the background — reported as the attack rate becoming permanently faster
+// with more fingers used, persisting even after the player let go and moved on (looted, equipped
+// gear, etc.), only "unsticking" via unrelated coincidental interactions. Fixed by counting active
+// contacts: the hold-loop only starts on the true first contact and only stops once every
+// contact has released, so extra fingers on the same button are a no-op instead of spawning
+// parallel un-cancellable loops.
+test('holding the attack button with multiple simultaneous contacts does not stack parallel attack loops', async ({ page }) => {
+  const isActive = () => page.evaluate(() => window.__isHoldAttackActive());
+
+  // Simulate 4 fingers landing on the button in quick succession, as multi-touch would —
+  // each is its own startAttackHold() call, mirroring 4 separate touchstart events.
+  await page.evaluate(() => {
+    window.startAttackHold({ clientX: 0, clientY: 0 });
+    window.startAttackHold({ clientX: 0, clientY: 0 });
+    window.startAttackHold({ clientX: 0, clientY: 0 });
+    window.startAttackHold({ clientX: 0, clientY: 0 });
+  });
+  expect(await isActive()).toBe(true);
+
+  // Release 3 of the 4 contacts — under the old bug this would already have called
+  // stopAttackHold() enough times to null out the (single, shared) timer variable, but the real
+  // regression was the *reverse* direction (extra fingers silently spawning orphaned extra
+  // loops with no way to cancel them) — the meaningful assertion is that the loop is still
+  // correctly considered "active" until every contact is accounted for, not stopped early.
+  await page.evaluate(() => {
+    window.stopAttackHold();
+    window.stopAttackHold();
+    window.stopAttackHold();
+  });
+  expect(await isActive()).toBe(true); // one contact still down — loop must still be running
+
+  // Release the 4th and final contact — now it must actually stop, with nothing orphaned.
+  await page.evaluate(() => window.stopAttackHold());
+  expect(await isActive()).toBe(false);
+});
