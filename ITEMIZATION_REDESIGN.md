@@ -65,6 +65,25 @@ bigger number on the same single stat.
 | Legendary | 4 | Standard pool | `rarity-legendary` (existing) | 5.0× | 2.5% |
 | Mythic | 4 (same count as Legendary — **not** a 5th slot) | Best-in-slot rolls + exclusive affixes, gated `minPrestige: 1` | **new** — needs a `rarity-mythic` CSS rule | 8.5× | 0.5%, only rollable post-Prestige |
 
+**Naming convention decided (2026-07-28): keep the genre-standard
+rarity names as-is (Common/Magic/Rare/Epic/Legendary/Mythic), don't
+invent custom names for the tier itself.** Considered a personal-touch
+custom naming scheme instead and deliberately rejected it — rarity
+color/name conventions (grey/white/yellow/purple/orange, roughly) are a
+shared visual language players already carry in from WoW, Diablo, and
+essentially every other loot-based game; a player recognizes "purple =
+really good" instantly without reading a word only if the standard
+convention is used. Renaming the tier costs that instant recognition
+and makes every new player relearn a custom scale before it's useful —
+a real onboarding-friction cost, not just an aesthetic one, especially
+relevant given the upcoming Google Play launch bringing in players with
+zero existing context on this specific game. Personal flavor stays
+exactly where it already lives and costs nothing: individual item
+names and flavor text (Voidreaver, Chronoblade, "It hungers for
+souls...") — that's genre-appropriate original content since players
+never rely on an item's *name* to gauge its power, only its rarity
+*tier* color/label.
+
 Mythic deliberately does NOT get a 5th stat slot — capping stat count at
 4 avoids overloading a single item card with more numbers than a player
 can meaningfully read at a glance. Mythic's power jump instead comes
