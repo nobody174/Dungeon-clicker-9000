@@ -163,7 +163,7 @@ export function doAscend() {
   saveGame();
   showTab("shards");
   const fragMsg = fragmentsEarned > 0 ? " +" + fragmentsEarned + " Void Fragment" + (fragmentsEarned !== 1 ? "s" : "") + "." : "";
-  showToast("⚡ Ascended!", "Gained " + earned + " Soul Shard" + (earned !== 1 ? "s" : "") + "." + fragMsg + " Gear kept.");
+  showToast("⚡ Prestiged!", "Gained " + earned + " Soul Shard" + (earned !== 1 ? "s" : "") + "." + fragMsg + " Gear kept.");
 }
 
 export function applyRunBonuses() {

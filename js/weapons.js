@@ -54,7 +54,7 @@ export const weaponPaths = {
   // Life-steal tier (heals the player-HP pool Boss Combat v1 added) is the late-tier signature
   // mechanic, completing the life-steal/DoT hybrid theme originally pitched for this path.
   reaper: {
-    name: "Reaper", icon: "💀", desc: "Executes low-HP enemies and steals life. Unlocked after your first Ascend.",
+    name: "Reaper", icon: "💀", desc: "Executes low-HP enemies and steals life. Unlocked after your first Prestige.",
     minPrestige: 1,
     tiers: [
       { id:"sword",     name:"Better Sword",    icon:"🗡️", cost:60,     clickBonus:5   },
@@ -134,7 +134,7 @@ export function updateWeaponButtons() {
 
   if (!state.selectedWeaponPath) {
     listEl.innerHTML = "";
-    choiceEl.innerHTML = `<p style="font-size:0.78rem;color:#9a9ab0;text-align:center;margin:0.2rem 0 0.8rem">Choose your weapon path for this run. Locked until your next Ascend.</p>`;
+    choiceEl.innerHTML = `<p style="font-size:0.78rem;color:#9a9ab0;text-align:center;margin:0.2rem 0 0.8rem">Choose your weapon path for this run. Locked until your next Prestige.</p>`;
     for (const pathId in weaponPaths) {
       const path = weaponPaths[pathId];
       if (path.minPrestige && state.prestigeCount < path.minPrestige) continue; // e.g. Reaper: unlocked after first Ascend
@@ -154,7 +154,7 @@ export function updateWeaponButtons() {
   const path = weaponPaths[state.selectedWeaponPath];
   const header = document.createElement("p");
   header.style = "font-size:0.78rem;color:#9a9ab0;text-align:center;margin:0.2rem 0 0.8rem";
-  header.textContent = path.icon + " " + path.name + " path — locked in until next Ascend.";
+  header.textContent = path.icon + " " + path.name + " path — locked in until next Prestige.";
   listEl.appendChild(header);
 
   for (let i = 1; i < path.tiers.length; i++) { // tier 0 is the shared starter sword, already bought

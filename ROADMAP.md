@@ -18,14 +18,23 @@ example of committed-but-held-back work).
   PATREON_TEMPLATES.md) supporter-only, as already established — that
   split (public patch notes, supporter-only speculative previews)
   stays the rule going forward, not something to re-decide per post.
-- **Terminology: the game's own UI/code call it "Prestige," not
-  "Ascend."** A player corrected this (2026-07-25) — worth a
-  consistency pass at some point: `js/prestige.js`, the Prestige tab
-  label, and `prestigeCount` are all named correctly, but some BACKLOG/
-  CHANGELOG/Patreon-post prose (including past drafts) used
-  "Ascend"/"Ascended" colloquially. Not urgent, but flagged so a future
-  doc/UI pass can standardize on "Prestige" consistently rather than
-  mixing both terms.
+- **✅ Terminology fixed (2026-07-28): "Prestige" is the single
+  player-facing term, "Ascend" is retired from the UI.** A player
+  correction (2026-07-25) turned out to point at a real, live
+  inconsistency, not just prose: the Prestige tab itself was labeled
+  "Prestige," but the button/modal *inside* that same tab said
+  "Ascend" — a player clicking into a tab called Prestige was
+  immediately shown a different word for the same action. Fixed every
+  player-visible string (button text, modal title/body, toast, weapon-
+  path unlock descriptions, Void Fragments unlock message) to say
+  "Prestige"/"Prestiged" — `index.html`, `js/ui.js`, `js/prestige.js`,
+  `js/voidFragments.js`, `js/weapons.js`. Internal function/variable
+  names (`doAscend`, `openAscendModal`, `playAscendSound`, etc.) were
+  deliberately left as-is — pure internal naming, never shown to a
+  player, not worth the churn of renaming just for consistency. Historical
+  BACKLOG.md/CHANGELOG.md prose from before this fix also keeps
+  "Ascend" as originally written, since those are dated logs of what
+  was said at the time, not live UI text.
 
 ## Committed, held back pending the Google Play Store launch
 

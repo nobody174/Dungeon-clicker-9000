@@ -80,7 +80,7 @@ export function updateAscendSection() {
     btn.classList.add("pulsing");
     dot.style.display = "inline";
   } else {
-    info.textContent = "Reach floor 20 to Ascend.  (Floor " + state.currentFloor + ")";
+    info.textContent = "Reach floor 20 to Prestige.  (Floor " + state.currentFloor + ")";
     btn.style.display = "none";
     dot.style.display = "none";
   }

@@ -86,7 +86,7 @@ export function renderVoidShop() {
   const container = document.getElementById("void-shop-list");
   if (!container) return;
   if (!isVoidUnlocked()) {
-    container.innerHTML = `<p style="font-size:0.78rem;color:#9a9ab0;text-align:center">Reach ${VOID_UNLOCK_PRESTIGE_COUNT} Ascends to unlock Run Rules.</p>`;
+    container.innerHTML = `<p style="font-size:0.78rem;color:#9a9ab0;text-align:center">Prestige ${VOID_UNLOCK_PRESTIGE_COUNT} times to unlock Run Rules.</p>`;
     return;
   }
   let html = `<div class="void-balance">🌀 <span id="void-balance">${state.voidFragments}</span> Void Fragments</div>`;
