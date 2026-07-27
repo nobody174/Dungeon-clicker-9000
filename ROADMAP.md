@@ -9,6 +9,23 @@ example of committed-but-held-back work).
 
 ## Process/communication decisions (so they aren't re-decided later)
 
+- **Manually triggering the "CI/CD — Test, Preview & Release" workflow
+  (workflow_dispatch) does NOT touch itch.io or the real GitHub Pages
+  site — verified twice (2026-07-27).** Investigated a real-seeming
+  scare: an itch.io "new build live" email arrived within minutes of
+  running the workflow manually to test the Android/TWA icon fix.
+  Checked both suspect runs directly via `gh run view` — in both, the
+  `🎮 Release to itch.io` and `🚀 Release to GitHub Pages` jobs showed
+  as skipped (`-`, 0s runtime, no execution log at all), confirming
+  their `if: startsWith(github.ref, 'refs/tags/v')` gate worked
+  correctly; only `workflow_dispatch`'s own `deploy-preview` job (gated
+  separately on `if: github.event_name == 'workflow_dispatch'`) ran.
+  The itch.io email itself reported **v1.8.0** — the version already
+  actually live since 2026-07-26, not anything newer — consistent with
+  a delayed/re-sent notification about that real prior release, not a
+  new unintended push. No workflow bug found; logging this here so a
+  future similar-timed coincidence doesn't get re-investigated from
+  scratch — the fix already has verified, confirmed-working gating.
 - **Patch-note Patreon posts are public/free, not paywalled.** Decided
   2026-07-25: a "what changed" post benefits most from reaching
   prospective/new players (signals an actively maintained project) and
