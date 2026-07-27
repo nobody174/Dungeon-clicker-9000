@@ -10,8 +10,9 @@ drop rates, and rewrites the save format). Nothing below is committed to
 
 BACKLOG.md #12 ("item variety expansion") scoped a content-volume top-up:
 more items in the existing 3 slots / 3 rarities, no architecture changes.
-This doc is for the larger ask that superseded it: **6 slots, 5 rarities,
-100 items, 8 sets, partial-set tiering, new affix types.** That means:
+This doc is for the larger ask that superseded it: **6 slots, 6 rarities
+(including a new "Magic" tier — see Rarity Tiers below), 100 items, 8
+sets, partial-set tiering, new affix types.** That means:
 
 - `state.equipped` (`state.js:46`) goes from a 3-key object to 6 keys —
   **save-format change**, needs the SAVESTATE SAFETY fallback-default
@@ -44,19 +45,43 @@ Trinket was considered and cut for v1 — 6 slots is already double the
 current count; a 7th adds surface area without a clear distinct identity
 from Amulet. Can revisit in a later pass.
 
-## Rarity tiers (5, up from 3)
+## Rarity tiers (6, up from 3)
 
-| Rarity | Color (existing CSS var pattern) | Relative power | Drop weight baseline (floor 1-9) |
-|---|---|---|---|
-| Common | `rarity-common` (existing) | 1.0× | 55% |
-| Rare | `rarity-rare` (existing) | 1.8× | 30% |
-| Epic | **new** — needs a `rarity-epic` CSS rule | 3.0× | 10% |
-| Legendary | `rarity-legendary` (existing) | 5.0× | 4.5% |
-| Mythic | **new** — needs a `rarity-mythic` CSS rule, gated `minPrestige: 1` | 8.5× | 0.5%, only rollable post-Ascend |
+**Revised 2026-07-28** to add a "Magic" tier below Rare, driven by a
+real, confirmed gap in the *current* 19-item table: today's items mix
+1-stat and 2-stat items with no consistent rule tying stat *count* to
+rarity (e.g. common Rusted Blade and legendary Void Plate are both
+1-stat; rare Headsman's Axe and legendary Chronoblade are both
+2-stat). Going forward, stat count scales predictably with rarity —
+this is the actual mechanical differentiator between tiers, not just a
+bigger number on the same single stat.
+
+| Rarity | Stat count | Stat pool | Color (existing CSS var pattern) | Relative power | Drop weight baseline (floor 1-9) |
+|---|---|---|---|---|---|
+| Common | 1 | Standard pool | `rarity-common` (existing) | 1.0× | 50% |
+| Magic | 1 | **Better** pool (stronger rolls than Common draws from, still 1 stat) — **new** | — needs a `rarity-magic` CSS rule | 1.4× | 25% |
+| Rare | 2 | Standard pool | `rarity-rare` (existing) | 1.8× | 15% |
+| Epic | 3 | Standard pool | **new** — needs a `rarity-epic` CSS rule | 3.0× | 7% |
+| Legendary | 4 | Standard pool | `rarity-legendary` (existing) | 5.0× | 2.5% |
+| Mythic | 4 (same count as Legendary — **not** a 5th slot) | Best-in-slot rolls + exclusive affixes, gated `minPrestige: 1` | **new** — needs a `rarity-mythic` CSS rule | 8.5× | 0.5%, only rollable post-Prestige |
+
+Mythic deliberately does NOT get a 5th stat slot — capping stat count at
+4 avoids overloading a single item card with more numbers than a player
+can meaningfully read at a glance. Mythic's power jump instead comes
+from rolling the *best possible* value at each of its 4 stat slots
+(where Legendary might roll a range) plus access to Mythic-exclusive
+affixes ordinary Legendaries can't roll at all.
 
 Power multipliers are relative to a common item's single-stat roll at the
 same slot; used below to keep the 100-item table internally consistent
 rather than hand-waved.
+
+**Retrofit note:** the existing 19 shipped items (`js/equipment.js`)
+don't follow this stat-count rule today and should be brought in line
+with it as part of this rebuild, not left as legacy exceptions —
+confirmed explicitly: rework the current item table alongside building
+the new 100-item table, rather than grandfathering the old items'
+inconsistent stat counts forward.
 
 Existing `rollLoot()` rarity-weight logic (floor/prestige shifts common→
 rare→legendary) extends the same way to epic/mythic — same shape, just
@@ -133,12 +158,13 @@ epic/mythic bands:
 | Tier | minFloor range | Slot power example (single-stat common baseline ×) |
 |---|---|---|
 | Common | 1+ | 1.0× |
-| Rare | 8+ | 1.8× |
+| Magic | 5+ | 1.4× |
+| Rare | 10+ | 1.8× |
 | Epic | 18+ | 3.0× |
 | Legendary | 25+ | 5.0× |
 | Mythic | 40+, `minPrestige: 1` | 8.5× |
 
-100 items ÷ 6 slots ÷ 5 rarities ≈ **3-4 items per slot-rarity cell**,
+100 items ÷ 6 slots ÷ 6 rarities ≈ **~2-3 items per slot-rarity cell**,
 distinguished by which affix(es) they roll (e.g. 3 different Epic Rings:
 one crit-leaning, one gold-leaning, one hybrid) — avoids strict power
 creep where every new item just replaces the last; players choose based
@@ -170,13 +196,15 @@ compare panel.
 ## Drop tables
 
 Same two-step roll `rollLoot()` already does (rarity roll, then uniform
-pick within that rarity's eligible pool) — extended to 5 rarities and
+pick within that rarity's eligible pool) — extended to 6 rarities and
 6 slots, no new roll mechanism:
 
 ```
-rarity roll (floor/prestige-shifted, 5-way instead of 3-way)
+rarity roll (floor/prestige-shifted, 6-way instead of 3-way)
   → filter eligible items (slot pool is now 6-wide, same minFloor gate)
     → uniform pick within rarity+slot-agnostic pool
+      → for Magic/Rare+, additionally roll each stat slot from that
+        rarity's stat pool (better pool for Magic, standard for others)
 ```
 
 Slot is NOT weighted in the roll (matches current behavior — the roll

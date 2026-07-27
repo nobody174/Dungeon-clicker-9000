@@ -49,12 +49,16 @@ header to a real date once actually pushed live, and remove this note.
 
 **Itemization Overhaul.** Full design doc written:
 [ITEMIZATION_REDESIGN.md](ITEMIZATION_REDESIGN.md). 6 equipment slots
-(up from 3: adds Helmet/Boots/Amulet), 5 rarity tiers (up from 3: adds
-Epic/Mythic), 8 named sets with new partial-set (2pc/full) tiering, 6
+(up from 3: adds Helmet/Boots/Amulet), 6 rarity tiers (up from 3: adds
+Magic/Epic/Mythic — Magic is new, a low-tier rung below Rare) each with
+a fixed stat count (Common/Magic 1 stat, Rare 2, Epic 3, Legendary/
+Mythic 4), 8 named sets with new partial-set (2pc/full) tiering, 6
 affixes including a new rarity/luck lever (`bossDmgMult`,
 `damageReduction`, `playerMaxHPBonus`, `offlineGainMult`,
 `potionDurationMult`, `rarityLuck`), and a 100-item table (numbers still
 to be finalized once the architecture is greenlit for a build cycle).
+Also folds in a retrofit of the current 19 shipped items, which don't
+follow a consistent stat-count-per-rarity rule today.
 Deliberately sequenced *after* the v1.9.0 progression-curve rebalance —
 itemization is an additive-bonus expansion, and the curve fix showed
 additive expansions delay a divergence wall without fixing it, so this
