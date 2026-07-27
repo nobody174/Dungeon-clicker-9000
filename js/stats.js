@@ -54,9 +54,28 @@ export function getAutoClickRate() {
   return rate;
 }
 
+// Progression balance pass (2026-07-26, see the progression balance model artifact from that
+// session): totalShardsEarned's multiplier used to be a flat `1 + totalShardsEarned * 0.1` — linear
+// in a lifetime-cumulative currency. That's part of why long-term progression stalls: it's the
+// only source of player power that grows forever (everything else — units, gear, achievements — is
+// additive but bounded), yet it was growing at the same flat rate the whole game, nowhere near
+// fast enough to keep pace with monster scaling at depth. Deliberately NOT made a smooth
+// exponential curve on shard *value* — shard *income* per prestige cycle is itself linear-in-floor
+// (see calcShardsToEarn() below, reset every Ascend), so pairing smooth exponential value with
+// linear income would just relocate the exact same additive-vs-geometric mismatch one layer up.
+// Milestone-stepped growth is provably reachable against linear income instead: every
+// SHARD_MILESTONE_INTERVAL lifetime shards permanently doubles this multiplier, uncapped (there's
+// always a next milestone, however far away), which is what actually lets this be the long-term
+// scaling engine the additive systems can't be.
+const SHARD_MILESTONE_INTERVAL = 25;
+export function getShardMilestoneMult() {
+  const milestonesHit = Math.floor(state.totalShardsEarned / SHARD_MILESTONE_INTERVAL);
+  return Math.pow(2, milestonesHit);
+}
+
 export function applyGoldMult(base) {
   const bonus      = shardShop.find(u => u.id === "goldBonus");
-  const shardMult  = (1 + state.totalShardsEarned * 0.1) * (1 + bonus.owned * 0.1);
+  const shardMult  = getShardMilestoneMult() * (1 + bonus.owned * 0.1);
   const gearMult   = 1 + getTotalMult("goldMult");
   const voidMult   = getVoidRiskGoldMult(); // Void Fragments' capped risk/reward trade-off
   return Math.floor(base * shardMult * gearMult * voidMult);

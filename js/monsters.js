@@ -52,6 +52,26 @@ export const TIER_PREFIXES = [
   { suffix: "Ascendant ",    cssClass: "tier-ascendant" }, // tier 7+: floors 71+
 ];
 
+// Progression balance pass (2026-07-26, see the progression balance model artifact from that
+// session): monster stat scaling was a pure 1.8^tier with no ceiling, uncapped forever, while
+// player power comes almost entirely from bounded additive sources (units, gear, achievements —
+// see stats.js's getTotalMult()). The two curve *shapes* are fundamentally incompatible long-term
+// — additive-vs-geometric divergence is mathematically inevitable, not a tuning-number problem.
+// Lowering 1.8 alone (e.g. to 1.6) only delays the divergence, it doesn't remove it — modeling
+// showed the wall lands around floor 210-260 either way. Fixed by keeping 1.8^tier exactly as-is
+// through TIER_SCALE_THRESHOLD (floors 1-150, tiers 0-14 — the range player feedback already says
+// feels good, left untouched on purpose) then switching to a shallower POST_THRESHOLD_BASE for
+// tiers beyond that, so difficulty keeps climbing forever (never flat, still an idle-game "number
+// goes up") without compounding at the same runaway rate past the point player power realistically
+// stops keeping pace.
+const TIER_SCALE_THRESHOLD = 14; // tier 14 = floors 141-150, last tier of the untouched original curve
+const POST_THRESHOLD_BASE  = 1.3;
+function monsterScaleForTier(tier) {
+  if (tier <= TIER_SCALE_THRESHOLD) return Math.pow(1.8, tier);
+  const baseline = Math.pow(1.8, TIER_SCALE_THRESHOLD);
+  return baseline * Math.pow(POST_THRESHOLD_BASE, tier - TIER_SCALE_THRESHOLD);
+}
+
 // Single shared accessor: resolves the tiered name/icon/stats for a given floor.
 // Consolidates what used to be 3 independent `monsters[(floor-1)%monsters.length]` lookups
 // (loadMonster, combat.js kill branch, stats.js goldPerSecond) into one source of truth.
@@ -59,7 +79,7 @@ export function getMonsterIdentity(floor) {
   const baseIndex = (floor - 1) % monsters.length;
   const base  = monsters[baseIndex];
   const tier  = Math.floor((floor - 1) / monsters.length);
-  const scale = Math.pow(1.8, tier);
+  const scale = monsterScaleForTier(tier);
   const prefixTier = TIER_PREFIXES[Math.min(tier, TIER_PREFIXES.length - 1)];
   const name = prefixTier.suffix ? prefixTier.suffix + base.name : base.name;
   const icon = base.icon;

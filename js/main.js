@@ -4,7 +4,7 @@
 // globals), wires up the main game loops, and kicks off loadGame().
 // ─────────────────────────────────────
 import * as state from "./state.js";
-import { getAutoClickRate, getTotalMult, pruneExpiredBuffs } from "./stats.js";
+import { getAutoClickRate, getTotalMult, pruneExpiredBuffs, getShardMilestoneMult } from "./stats.js";
 import { units, renderUnitCosts } from "./units.js";
 import { toggleMute, setVolumeLevel } from "./audio.js";
 import { showTab, showShopTab, showGearTab, resetGame, flashSaveIndicator, renderStats } from "./ui.js";
@@ -14,12 +14,12 @@ import { equipFromInventory, salvageFromInventory, toggleBagCompare, equipPendin
 import { levelUpHero } from "./heroes.js";
 import { saveGame, loadGame, exportSaveString, importSaveString } from "./save.js";
 import { renderActiveBuffs } from "./potions.js";
-import { loadMonster } from "./monsters.js";
+import { loadMonster, getMonsterIdentity } from "./monsters.js";
 import { updateGold } from "./ui.js";
 import { dodge, renderPlayerHP, forceMissForTest } from "./bossCombat.js";
 import { startChallenge, endChallenge, exitChallengeEarly, closeChallengeResult, isChallengeRunning } from "./challenge.js";
 import { buyVoidUpgrade, setVoidRiskLevel } from "./voidFragments.js";
-import { devAddGold, devSetFloor, devAddPrestige, devSetClickDamage, devRestoreClickDamage, isDevOneShotActive, devMaxMastery, devKillBoss } from "./dev.js";
+import { devAddGold, devSetFloor, devPromptSetFloor, devAddPrestige, devSetClickDamage, devRestoreClickDamage, isDevOneShotActive, devMaxMastery, devKillBoss } from "./dev.js";
 import { GAME_VERSION } from "./version.js";
 import { showToast } from "./toast.js";
 
@@ -120,6 +120,7 @@ const isLocalDev = ["localhost", "127.0.0.1", ""].includes(location.hostname);
 if (isLocalDev) {
   window.devAddGold       = devAddGold;
   window.devSetFloor      = devSetFloor;
+  window.devPromptSetFloor= devPromptSetFloor;
   window.devAddPrestige   = devAddPrestige;
   window.toggleDevOneShot = toggleDevOneShot;
   window.devMaxMastery    = devMaxMastery;
@@ -145,6 +146,9 @@ window.__lootQueueLen   = () => state.lootQueue.length;
 window.__dealDamage     = dealDamage; // lets tests land a kill without a real click (blocked by an open modal overlay, same as a real player)
 window.__forceMiss      = forceMissForTest; // lets tests force a boss-combat miss without waiting on real 5s/1.4s timers
 window.__playerHP       = () => state.playerHP;
+window.__monsterScale   = (floor) => getMonsterIdentity(floor).scale;
+window.__shardMult      = getShardMilestoneMult;
+window.__setTotalShardsEarned = state.setTotalShardsEarned;
 
 // ─────────────────────────────────────
 // Main loops

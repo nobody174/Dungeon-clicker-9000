@@ -25,6 +25,17 @@ export function devSetFloor(floor) {
   saveGame();
 }
 
+// Free-form floor jump — a prompt() beats hand-picking preset floors, since testing needs
+// change from session to session (e.g. checking a specific tier's monster identity or a
+// specific difficulty-curve breakpoint) more often than the old fixed set of buttons covered.
+export function devPromptSetFloor() {
+  const input = prompt("Jump to floor:", String(state.currentFloor));
+  if (input === null) return;
+  const floor = parseInt(input, 10);
+  if (!Number.isFinite(floor) || floor < 1) return;
+  devSetFloor(floor);
+}
+
 export function devAddPrestige(amount) {
   // "+1" buttons add; the "Set to 5" button is really a floor, not an add —
   // callers pass the target value directly when they mean "set", and a small

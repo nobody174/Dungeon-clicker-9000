@@ -1114,13 +1114,9 @@
         Local testing shortcuts. Does not affect real gameplay balance — just skips the grind.
       </p>
       <div class="dev-tools-grid">
-        <button class="upgrade-btn" onclick="devAddGold(1000)">+1,000 Gold</button>
-        <button class="upgrade-btn" onclick="devAddGold(100000)">+100,000 Gold</button>
         <button class="upgrade-btn" onclick="devAddGold(10000000)">+10,000,000 Gold</button>
-        <button class="upgrade-btn" onclick="devSetFloor(5)">Jump to Floor 5 (Boss)</button>
-        <button class="upgrade-btn" onclick="devSetFloor(10)">Jump to Floor 10 (Mega-Boss)</button>
-        <button class="upgrade-btn" onclick="devSetFloor(11)">Jump to Floor 11 (Tier 2 monsters)</button>
-        <button class="upgrade-btn" onclick="devSetFloor(20)">Jump to Floor 20 (Ascend unlocks)</button>
+        <button class="upgrade-btn" onclick="devAddGold(100000000)">+100,000,000 Gold</button>
+        <button class="upgrade-btn" onclick="devPromptSetFloor()">Jump to Floor…</button>
         <button class="upgrade-btn" onclick="devAddPrestige(1)">+1 Prestige Count</button>
         <button class="upgrade-btn" onclick="devAddPrestige(5)">Set Prestige Count to 5 (Void Fragments unlock)</button>
         <button class="upgrade-btn" id="dev-oneshot-btn" onclick="toggleDevOneShot()">Toggle One-Shot Click Damage (off)</button>

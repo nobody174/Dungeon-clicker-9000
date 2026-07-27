@@ -46,75 +46,6 @@ mechanic rather than a bug.
     would still be a cheap, low-risk clarity add whenever there's
     spare time, but not chasing this as a real bug.
 
-21. **Difficulty curve has no ceiling or new content past floor
-    200 — confirmed real, genuinely new.** Report: "very sharp spike
-    in difficulty after floor 200... prevents smooth progression."
-
-    Confirmed mathematically: `monsters.js`'s `getMonsterIdentity()`
-    scales both monster stats AND player max HP by `1.8^tier`,
-    completely uncapped — floor 200 is tier 19, i.e. `1.8^19` ≈
-    156,000× base stats, with no new mechanic, unit, or upgrade tier
-    introduced past whatever currently exists to keep pace.
-
-    Candidate directions, not decided or scoped here:
-    - Flatten the exponential curve at some point (e.g. switch from
-      pure `1.8^tier` to a slower-growing function past a threshold
-      tier) — purely a numbers change, no new content, but a real
-      rebalance of every existing tier past that point.
-    - Introduce new unit/weapon/upgrade tiers gated deep enough to
-      keep pace with the curve instead of flattening it (keeps the
-      "number goes up forever" idle-game feel, but is ongoing content
-      work, not a one-time fix).
-    - Some combination: flatten growth *and* add periodic new power
-      tiers, so progression stays smooth without the curve needing to
-      do all the work forever.
-
-    See also item 25 below — the Trophy Room "stuck past floor 240"
-    report is a direct downstream symptom of this same root cause
-    (`TIER_PREFIXES` capping at 8 entries/tier 7+) and should be
-    resolved as part of whatever fix lands here, not separately.
-
-    **Note (2026-07-26):** this player is very likely the same
-    reporter flagged in item 27 (suspected autoclicker use). Reaching
-    floor 200+ multiple times and fully maxing Soul Shards/Void
-    Fragments (item 22) this fast after launch is an extreme pace —
-    doesn't invalidate that the difficulty-wall/no-endgame-sink gaps
-    are real design issues worth fixing, but this player's specific
-    pace shouldn't be treated as representative of normal play when
-    picking numbers for the eventual rebalance.
-
-    **Direction decided (2026-07-26) — fix the tier/floor ceiling
-    first; item-slot expansion is a separate later patch, not a
-    substitute.** Considered and rejected a "purchasable new equipment
-    slots (Head/Legs/Amulet), gated behind shard/void/gold cost, that
-    unlock new item drops once bought" idea as the primary fix for
-    items 21/22/25/26 together. Pushback: that gives shards/fragments
-    something to spend once (a real but one-time sink, addresses item
-    22/26's "nothing to spend on" complaint) but doesn't touch the
-    actual reported wall — #21 and #25 are about *floor/tier*
-    progression flatlining past tier 8, and new item slots don't move
-    that ceiling at all; a player would equip the new slots once and
-    still be staring at the same "Ascendant" monster identity forever.
-    New slots is the smaller, narrower idea; raising the tier cap (or
-    flattening the growth curve) is what actually unblocks #21 *and*
-    #25 *and* gives future itemization work somewhere new to matter.
-
-    **Decided sequencing:** fix the tier/floor ceiling first (extend
-    `TIER_PREFIXES` past 8 entries and/or flatten the `1.8^tier`
-    curve past a threshold — the two candidate directions already
-    listed above), *then* treat item-slot/rarity expansion (new
-    equipment slots, a purchase-gated unlock system, new drop tables
-    per slot) as a follow-on major content patch reusing the
-    itemization redesign already scoped separately in
-    ITEMIZATION_REDESIGN.md (6 slots, 5 rarities, 100 items — deferred
-    as a "future major patch" when items 12/16 shipped). Not scrapping
-    the slot-purchase idea, just sequencing it behind the ceiling fix
-    so it lands as real new depth rather than a one-time sink bolted
-    onto an unchanged ceiling.
-
-    Needs a real design pass (numbers modeling against the existing
-    curve) before any of these get scoped further.
-
 22. **Soul Shards / Void Fragments have no sink once fully
     upgraded — confirmed real, genuinely new.** Report: "lack of
     utility or progression paths to spend high-tier resources."
@@ -137,16 +68,27 @@ mechanic rather than a bug.
     being gold-only may overlap with this same "nothing to spend it on"
     gap; needs verification which of the two it actually is.
 
-    **Note (2026-07-26):** same caveat as item 21 — fully maxing both
-    currencies this soon after launch suggests either heavy organic
-    play or the suspected-autoclicker pace flagged in item 27. Still a
-    real gap worth fixing either way, but calibrate any new tiers
-    against normal play, not this player's pace alone.
+    **Note (2026-07-26):** fully maxing both currencies this soon after
+    launch suggests either heavy organic play or the suspected-
+    autoclicker pace flagged in item 27. Still a real gap worth fixing
+    either way, but calibrate any new tiers against normal play, not
+    this player's pace alone.
 
-    **Sequencing (2026-07-26):** see item 21's "Direction decided"
-    note — new shard/fragment sinks (including any item-slot-purchase
-    system) are sequenced *after* the tier/floor ceiling fix, as a
-    follow-on itemization patch, not the primary answer to this gap.
+    **✅ Progression-ceiling half already fixed (v1.9.0, 2026-07-26).**
+    The original framing bundled two things together — "endgame
+    difficulty has no ceiling" and "shard/fragment currencies have
+    nothing left to buy." The difficulty-ceiling half (formerly items
+    21/25 here) is now fixed: monster scaling flattens past floor 150
+    instead of compounding `1.8^tier` forever, and Soul Shards became
+    the actual long-term scaling engine via milestone-stepped
+    doublings instead of a flat linear multiplier — see CHANGELOG.md
+    1.9.0. What's still open is specifically the *shop content*
+    gap — shardShop/voidShop tiers are still finite lists with nothing
+    new past max level. That's the remaining scope of this item: new
+    shard/fragment sinks (permanent upgrades, cosmetics, map modifiers,
+    exclusive content — the report's own suggestions), still needing
+    its own design pass, now sequenced against a corrected curve
+    instead of a broken one.
 
 23. **Procedural "Abyss Mode" / online multiplayer — long-term,
     out of scope for now.** Report frames this explicitly as
@@ -156,12 +98,9 @@ mechanic rather than a bug.
     Two very different asks bundled together:
     - **Procedural/infinite endgame mode** — conceptually adjacent to
       the existing Daily Challenge Run (`js/challenge.js`,
-      `js/prng.js`'s seeded PRNG already exists) and to item 21's
-      difficulty-curve problem above (an "Abyss" mode is one possible
-      answer to "what's the endgame loop," alongside just fixing the
-      curve). Feasible within this project's existing architecture (no
-      backend needed) — a real future roadmap candidate, not scoped
-      further here.
+      `js/prng.js`'s seeded PRNG already exists). Feasible within this
+      project's existing architecture (no backend needed) — a real
+      future roadmap candidate, not scoped further here.
     - **Online multiplayer** — a fundamentally different scale of
       work, same category of decision as cloud save (explicitly
       declined for now — would need a backend/auth system this project
@@ -177,54 +116,38 @@ mechanic rather than a bug.
     timed format** (`js/challenge.js`, `js/prng.js`) — every entrant
     plays the identical seed for the identical fixed window, so "floor
     reached" is already a fair, comparable number with zero new game-
-    design work. Needs only: a lightweight backend/API to accept and
-    rank score submissions (the one piece of new infrastructure this
-    would require) plus a leaderboard UI. A separate, bigger idea
-    floated alongside this — prestige-gated "worlds"/floor-reset tiers
-    — is a real structural redesign in its own right and should stay a
-    distinct future item, not folded into the leaderboard scope.
+    design work. A separate, bigger idea floated alongside this —
+    prestige-gated "worlds"/floor-reset tiers — is a real structural
+    redesign in its own right and should stay a distinct future item,
+    not folded into the leaderboard scope.
 
-    Not implemented, not scoped — logged as a long-term idea per the
-    report's own framing, not a near-term backlog item. Revisit only
-    once nearer-term items (bug fixes, the #21/#22 endgame gaps) are
-    further along.
+    **Decided (2026-07-27) — this is a real, wanted feature, not just
+    a long-term idea; and the platform question is settled: use
+    Google Play Games Services (GPGS) leaderboards, not a custom
+    backend.** Given the imminent Google Play Store launch, GPGS gives
+    free, built-in leaderboard + achievement infrastructure with zero
+    hosting/backend to build or maintain — submit a Daily Challenge
+    score, Google renders the leaderboard UI, players sign in with
+    their existing Google account (no new auth system needed). This is
+    also standard practice across idle/clicker games on Play Store,
+    not a novel choice.
+
+    **Known limitation, accepted as the v1 scope:** GPGS accounts are
+    tied to Google/Android sign-in — an itch.io/browser player has no
+    path into that system, so this leaderboard is Play-Store-only by
+    nature, not a shared cross-platform ranking. Itch.io players simply
+    won't have a leaderboard for now; a separate lightweight
+    web-only leaderboard (custom backend) is a distinct, optional
+    future item if that audience later turns out to justify the extra
+    infrastructure — not something to build alongside or block v1 on.
+
+    Not yet implemented — needs the actual GPGS integration scoped
+    (Play Console setup, sign-in flow, score-submission call site
+    hooked into `js/challenge.js`'s existing result/scoring path).
 
 ---
 
 ## Feedback batch (2026-07-26) — second report, same external playtester
-
-25. **Boss Trophy Room appears "stuck" past floor ~240 — confirmed
-    real, same root cause as item 21.** Report: "the info says that
-    they are at 1+, i have passed from 200 some times already... after
-    240 it's like hitting a wall."
-
-    Confirmed in code, not a bug — a direct consequence of a known
-    tier-collapse scope cut: `monsters.js`'s `TIER_PREFIXES` has
-    exactly 8 entries, and every tier from 7 upward
-    (`Math.min(tier, TIER_PREFIXES.length - 1)`, `monsters.js:63`)
-    collapses into the same "Ascendant" identity — tier 7 starts at
-    floor 71, so every floor from 71 through 240+ (and beyond)
-    presents as visually/mechanically identical monsters with no new
-    trophy-gallery entries to unlock. The player is correctly reading
-    the UI — the gallery genuinely has nothing left to show them past
-    tier 7, not a display bug. This is the same underlying "no ceiling
-    past floor 200" gap already logged as item 21 (difficulty curve),
-    just observed through the Trophy Room instead of raw difficulty —
-    both are downstream of `TIER_PREFIXES` being a deliberately
-    bounded 8-entry list.
-
-    Not a separate fix — should be resolved as part of whatever design
-    pass addresses item 21 (extending `TIER_PREFIXES` past 8 entries,
-    or introducing a different late-game identity system, would
-    automatically unstick the Trophy Room too). Logged separately here
-    only because it was reported as its own confusion point, distinct
-    from the raw "difficulty spikes" framing of item 21.
-
-    **Note (2026-07-26):** fully clearing all 80 trophy-gallery
-    entries this soon — same reporter as items 21/22/26 — is the same
-    "extreme pace" signal flagged in item 27 (suspected autoclicker).
-    Doesn't change that the content wall is real, just a data point on
-    how this particular player got there so fast.
 
 26. **Prestige system's reward is gold-only — player asking for
     other bonus types.** Report: "Maybe prestige system should give
@@ -243,30 +166,30 @@ mechanic rather than a bug.
     Not implemented, not scoped — flagged for the next design/backlog
     session.
 
-    **Note (2026-07-26):** same reporter as items 21/22/25 — see item
-    27 (suspected autoclicker). Doesn't invalidate the "prestige is
+    **Note (2026-07-26):** same reporter as item 22 — see item 27
+    (suspected autoclicker). Doesn't invalidate the "prestige is
     gold-only" complaint, but worth confirming this player's play
     pattern before treating it as urgent relative to other items.
 
-    **Sequencing (2026-07-26):** same as item 22 — any new prestige
-    reward variety is sequenced after item 21's tier/floor ceiling
-    fix, as part of the same follow-on itemization/rewards patch, not
-    a standalone fix ahead of it.
+    Soul Shards' own progression-ceiling problem is separately fixed
+    (v1.9.0 — see item 22's update above); this item is specifically
+    about reward *variety*, not the shard curve itself, and remains
+    open.
 
 ---
 
 ## Meta / process item (2026-07-26)
 
 27. **Suspected autoclicker use by the reporter behind items
-    20/21/22/25/26 — needs a policy decision, not a code fix.** This
-    single player has, within about a month of launch: reached
-    floor 200+ multiple times, fully maxed both Soul Shards and Void
-    Fragments shops (item 22), 100%-cleared the 80-entry Trophy Room
-    (item 25), and separately bragged about running a 1ms autoclicker
-    — while also reporting the dodge mechanic as "inconsistent" (item
-    20), which a real 1ms-interval autoclicker would plausibly produce
-    (rapid unattended clicking with no actual attention on the
-    telegraph warning) without it being a mechanic bug.
+    20/22/26 — needs a policy decision, not a code fix.** This single
+    player has, within about a month of launch: reached floor 200+
+    multiple times, fully maxed both Soul Shards and Void Fragments
+    shops, 100%-cleared the 80-entry Trophy Room, and separately
+    bragged about running a 1ms autoclicker — while also reporting the
+    dodge mechanic as "inconsistent" (item 20), which a real
+    1ms-interval autoclicker would plausibly produce (rapid unattended
+    clicking with no actual attention on the telegraph warning)
+    without it being a mechanic bug.
 
     This isn't a bug report — it's a design-policy question: does an
     autoclicker count as acceptable idle-game play (the genre already
@@ -275,28 +198,209 @@ mechanic rather than a bug.
     Combat's dodge timing, which explicitly rewards attentive manual
     play)?
 
-    **Policy decided (2026-07-26) — conditional on item 23
-    (leaderboard).** No blanket stance either way; it depends entirely
-    on whether a competitive/comparative feature exists:
-    - **If no leaderboard ever ships** (single-player, solo-progress
-      game as it stands today): autoclicker use is a non-issue — "play
-      however you want" applies, since nothing compares one player's
-      progress against another's. No code change needed under this
-      branch.
-    - **If item 23's leaderboard ships:** autoclicker use becomes a
-      fairness question the moment scores are compared publicly, and
-      would need an actual policy (client-side click-interval floor,
-      required-manual-input framing for leaderboard eligibility only,
-      or explicitly allowing it and accepting automated scores on the
-      board) — but only decide this if/when item 23 is actually being
-      built, not preemptively.
+    **Policy decided (2026-07-27) — now that item 23's leaderboard is
+    a confirmed, wanted feature (Google Play Games Services), not
+    just a maybe: don't build custom anti-cheat, use GPGS's own
+    tooling.** Genre precedent is directly applicable here, not
+    something to re-derive: idle/clicker games as a category already
+    treat automation as a first-class, expected feature (that's what
+    "idle" means) — they don't fight autoclickers on core gameplay at
+    all. What the genre *does* gate is leaderboard framing/tooling
+    specifically, and the standard, low-effort answer is:
+    - **Frame the leaderboard as bragging rights, not a ranked
+      ladder** — same framing the existing Daily Challenge Run already
+      uses ("no permanent rewards, score/bragging-rights only"). This
+      alone defuses most of the pressure to build detection systems.
+    - **Let GPGS's built-in score-integrity/moderation tools be the
+      anti-cheat layer**, rather than writing custom click-timing
+      heuristics. Google Play Console already supports flagging/
+      resetting suspicious leaderboard scores if abuse ever becomes a
+      real, measured problem — build nothing until that's actually
+      needed.
+
+    No custom code planned. Revisit only if GPGS's built-in tooling
+    turns out to be insufficient once the leaderboard is live and
+    abuse is actually observed, not preemptively.
 
     Separately, regardless of which branch applies: continue excluding
     this reporter's pace from calibrating balance numbers in items
-    21/22/26 (already noted inline on those entries) — that's a
+    22/26 (already noted inline on those entries) — that's a
     data-interpretation practice, not a policy enforcement mechanism,
     and applies either way.
 
     Not implemented, not scoped — revisit only if/when item 23
     (leaderboard) moves from "future idea" to active scoping; no
     action needed before then.
+
+---
+
+## Content pipeline (2026-07-27) — feeds item 22, sourced for a regular post-launch update cadence
+
+Context: preparing a Google Play Store launch in the next few days, and
+deliberately wants a queue of small, real, shippable improvements to
+release on an ongoing cadence afterward (so the player base sees regular
+updates, not one big patch then silence). This item is that queue —
+several distinct ideas proposed together, reviewed and sequenced, NOT
+meant to ship all at once.
+
+**Review verdict on the shard-shop upgrade batch:** the proposed
+Economy/Combat/Progression/Convenience/Fun category split is a good
+organizing structure — better than today's flat `shardShop` list. But
+most of the individual upgrades (Merchant's Blessing, Battle Hardened,
+Critical Training, Crushing Blows, Giant Slayer, Treasure Hunter, Lucky
+Purse) are flat additive-percentage bonuses reusing existing
+`getTotalMult()` keys — the same *shape* of bonus the v1.9.0 balance
+pass just showed doesn't fix long-term progression on its own (more
+additive headroom delays a wall, doesn't remove one). Not rejected —
+they're fine, low-risk, easy content-volume filler for the shard shop —
+but they should be understood and marketed internally as "more options,"
+not as "the fix" for item 22's "shards feel pointless" complaint. Two
+ideas in the batch are genuinely different in kind and are the real
+priority:
+
+- **Veteran Adventurer** (every 25 floors *ever* reached permanently
+  raises the starting floor of all future runs by 1) is the strongest
+  idea in the batch — a genre-standard "respects the player's
+  time" mechanic that directly answers "give shards a reason to keep
+  mattering" in a way a bigger number never does.
+
+  **Decided (2026-07-27):** starting-floor bonus does NOT scale the
+  existing flat `startGold`/"Head Start" shard tier (+200g flat would
+  be meaningless at, say, floor 30's economy) — instead, Veteran
+  Adventurer grants its own small, capped "catch-up" gold gift on run
+  start, sized to roughly afford the cheapest unit at the player's
+  actual starting floor's price level. Keeps Head Start simple
+  (unchanged, still just +200g flat for early game) and keeps Veteran
+  Adventurer's effect self-contained rather than depending on whether
+  the player also bought unrelated shard tiers. Uncapped forever,
+  same reasoning as monster-tier scaling being uncapped. Still needs:
+  exact 25-floor interval confirmed as final, and confirmation this
+  doesn't create any weirdness with Prestige's floor-reset-to-1 logic
+  (should be a pure "the run now starts higher," nothing else changes).
+
+- **Momentum** (temporary stacking damage buff, capped stacks) is a
+  good real-time combat-feel addition, architecturally similar in kind
+  to Boss Combat v1 (a new tick-loop system, not a shop row).
+
+  **Decided (2026-07-27), revised from the original pitch after
+  thinking through boss-fight pacing:** the original framing (10s
+  decay timer running from the very first kill) doesn't actually work
+  — a player realistically can't land 50 kills inside a rolling 10s
+  window once boss fights (with their own multi-second cadence) are
+  in the mix, so the buff would almost never reach its stated cap in
+  practice. Revised mechanic: **stacks build purely per-kill with no
+  timer running at all until 50 stacks (max) is reached** — climbing
+  from 0→50 is never at risk of decaying mid-climb. Only once at cap
+  does a 10s countdown start; landing another kill before it expires
+  refreshes the window (staying at cap indefinitely during a fast
+  clear); if 10s passes with no kill, **all 50 stacks drop to 0 at
+  once** (not a gradual per-stack decay — simpler to understand and
+  matches how the pre-cap phase already has no partial-decay concept).
+  Purely kill-based, no interaction with Boss Combat's dodge/HP system
+  (confirmed: getting hit does not reset stacks). Math unchanged from
+  the original pitch: +0.5%/stack × 50 stacks = +25% damage at cap.
+  Should still be built and playtested in isolation before any
+  shard-shop upgrade extends its cap/decay-window further.
+
+**Full proposed upgrade list, categorized, not yet built (any of these
+are fair game as small individual patches post-launch):**
+- *Economy:* Merchant's Blessing (shop prices -2%/level, max 10),
+  Lucky Purse (+500 starting gold/level, max 10), Treasure Hunter
+  (+10% boss gold/level, max 10).
+- *Combat:* Battle Hardened (+5% passive DPS/level, max 20), Critical
+  Training (+1% crit chance/level, max 10), Crushing Blows (+20% crit
+  damage/level, max 10), Giant Slayer (+2% boss damage/level, max 15).
+- *Progression:* Veteran Adventurer (see above — priority), Efficient
+  Ascension (+5% Soul Shards earned per Prestige/level, max 20),
+  Ancient Knowledge (+1% Hero XP or similar per completed Prestige —
+  placeholder pending whatever future Hero system exists to feed).
+- *Equipment:* Treasure Sense (+5% equipment drop chance/level, max
+  10), Blacksmith's Favor (cheaper equipment-related costs, max 10) —
+  needs to be checked against whatever ITEMIZATION_REDESIGN.md lands on
+  before finalizing, since that doc may add its own drop-rate levers.
+- *Offline:* Time Compression (offline combat *speed*, not just
+  *duration* — a genuinely different axis from the existing
+  `offlineCap`/`offlineMastery` shard tiers), Auto Commander
+  (auto-buys the cheapest affordable unit while offline).
+- *Fun:* Monster Hunter (+5% Trophy Room discovery chance/level, or
+  rare-monster-appearance-rate framing — zero balance risk, purely
+  makes the Trophy Room feel more alive).
+
+**Separate, structurally different idea: Soul Shard Milestones (spend-
+based, not earn-based).** Distinct from — and complementary to —
+v1.9.0's earned-shard milestone-doubling fix (which keys off
+`totalShardsEarned`). This one keys off `state.shardsSpent` (already
+tracked) and unlocks account-wide milestones at spend thresholds, so
+shards feel valuable even after every current shop tier is maxed out.
+Genuinely good direction — spend-gated unlocks create a reason to
+actually spend rather than hoard, which an earn-based multiplier alone
+doesn't do.
+
+**Two example rewards fixed (2026-07-27) — the "100 spent" and "750
+spent" rows referenced systems that already exist under a different
+unlock condition, which would have double-gated them confusingly:**
+- **"Unlock Void Fragments" (100 spent) → replaced with "Unlock a 4th
+  Prestige shard-shop category."** Since Void Fragments are already
+  unlocked by `prestigeCount >= 5`, this milestone instead reveals the
+  *Progression* category from the new shard-shop upgrade batch above
+  (Veteran Adventurer, Efficient Ascension) — hitting 100 spent shards
+  now means genuinely new shop content appears, not a duplicate unlock
+  of something already gated another way.
+- **"Unlock Masteries" (750 spent) → replaced with "Unlock Mastery
+  Overdrive."** Masteries already exist and are always available
+  (`units.js`'s `MASTERY_MILESTONES` caps visibly at level 50/"Aura").
+  This milestone instead raises that soft ceiling — a new 5th
+  "Ascended" mastery tier unlockable past level 100 — giving veteran
+  players still dumping gold into Mastery at endgame a reason to keep
+  going instead of the sink going stale after Aura.
+
+**Ancient Forge — shaped (2026-07-27).** Confirmed scope: **disenchant**
+an owned item (Bag or equipped) into 1-2 "Essence" matching its rarity
+tier, then spend Essence to **reroll one existing affix on a piece the
+player already has equipped** — a straight stat replacement, not an
+addition on top and not a merge of two separate items into a new one.
+Deliberately ruled out "combine two items' affixes into a new custom
+item" as too large/risky a system (combinatorial balance surface,
+risks obsoleting the point of finding new drops) — reroll-in-place
+keeps the power ceiling exactly where Itemization already defines it,
+while still giving duplicate/unwanted drops real purpose. Needs its
+own scope pass (essence costs, whether reroll can target a *specific*
+affix slot or is fully random) once Itemization's final item/affix
+list exists to reroll against.
+
+**Hero Passives — confirmed (2026-07-27) as the same *shape* as
+existing Void Fragment run-modifiers/Soul Shard shop tiers** — a new
+pool of small permanent account-wide bonuses (flat DPS%, gold%, and at
+least one QoL-flavored option — e.g. potions last longer, units
+slightly cheaper), not a new mechanic to invent from scratch. Easiest
+of the milestone rewards to design since it reuses an established
+pattern rather than needing new systems.
+
+**Still needing their own scope before being locked into the milestone
+table:** "Relics" (boss-drop cosmetic/power item — needs its own
+scope), "Mythic Bosses" and "Endless Challenges" (both genuinely new
+endgame content, likely overlapping with item 23's procedural-endgame
+idea).
+
+**Sequencing relative to other open work:** this whole item stays behind
+ITEMIZATION_REDESIGN.md's own sequencing (already noted: itemization
+waits until this curve-fix work — v1.9.0 — is validated) and behind
+Veteran Adventurer/Momentum's own scoping passes. Individual small,
+low-risk items from the categorized list above (Monster Hunter, Auto
+Commander, Time Compression) can ship independently and out of order
+whenever a quick regular-cadence patch is wanted — they don't depend on
+anything else in this list landing first.
+
+Not implemented, not fully scoped — logged as a working queue for
+post-Play-Store-launch regular updates, per explicit request. Revisit
+piece by piece rather than all at once.
+
+**Gear Loadouts explicitly deferred (2026-07-27).** ROADMAP.md's
+"Gear Loadouts" entry (Inventory/Bag system Part 2 — named loadouts
+that swap all 3 equipped slots at once) is fully designed and
+technically unblocked already (Part 1, the Bag itself, shipped in
+v1.7.0), but confirmed not worth building yet at today's ~19-item
+count — swapping between so few possible loadouts by hand isn't a
+real problem to solve. Explicitly parked until after the Itemization
+Overhaul ships and there's enough gear (6 slots, 100 items) that
+loadout-swapping actually saves meaningful time.

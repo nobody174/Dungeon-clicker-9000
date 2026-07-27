@@ -3,7 +3,7 @@
 // ─────────────────────────────────────
 import * as state from "./state.js";
 import { formatNum } from "./utils.js";
-import { getTotalMult } from "./stats.js";
+import { getTotalMult, getShardMilestoneMult } from "./stats.js";
 import { heroes } from "./heroes.js";
 
 export function updateGold() {
@@ -61,7 +61,7 @@ export function renderStats() {
 
 export function updateShardDisplay() {
   document.getElementById("shard-balance").textContent = state.shardBalance;
-  const mult = (1 + state.totalShardsEarned * 0.1).toFixed(1);
+  const mult = getShardMilestoneMult().toFixed(1);
   document.getElementById("shard-mult").textContent = mult;
 }
 

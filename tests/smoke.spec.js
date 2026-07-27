@@ -200,3 +200,55 @@ test('miss gold penalty percentage is smaller at a higher floor tier', async ({ 
 
   expect(lossTier20).toBeLessThan(lossTier0);
 });
+
+// Progression balance pass (2026-07-26): monster scale used to be a pure 1.8^tier forever,
+// diverging from player power's bounded additive growth (see the balance model from that
+// session — estimated wall around floor 210-260). Fixed by keeping 1.8^tier through tier 14
+// (floors 1-150, the range that already felt good) then switching to a much shallower 1.3^tier
+// past that threshold, so difficulty keeps climbing forever without compounding at the same
+// runaway rate. Verifies both halves: the early curve is untouched, and the late curve is
+// meaningfully gentler than a naive continuation of 1.8^tier would have been.
+test('monster scale keeps the original curve early, flattens past tier 14', async ({ page }) => {
+  const scaleAt = (floor) => page.evaluate((f) => window.__monsterScale(f), floor);
+
+  // Early game (tier 9, floor 100): untouched, should match 1.8^9 exactly.
+  const scale100 = await scaleAt(100);
+  expect(scale100).toBeCloseTo(Math.pow(1.8, 9), 1);
+
+  // At the threshold itself (tier 14, floor 150): still the original curve.
+  const scale150 = await scaleAt(150);
+  expect(scale150).toBeCloseTo(Math.pow(1.8, 14), 1);
+
+  // Past the threshold (tier 19, floor 200): meaningfully less than naive 1.8^19 would give.
+  const scale200 = await scaleAt(200);
+  const naiveScale200 = Math.pow(1.8, 19);
+  expect(scale200).toBeLessThan(naiveScale200 / 2); // at least 2x gentler than unmodified curve
+  expect(scale200).toBeGreaterThan(scale150); // still strictly increasing — never flat
+});
+
+// Progression balance pass (2026-07-26): the Soul Shard gold multiplier used to be a flat
+// `1 + totalShardsEarned * 0.1` — linear forever, the same slow rate whether a player has 5 or
+// 5,000 lifetime shards, even though it's the only source of player power with no ceiling. Fixed
+// with milestone-stepped permanent doublings (every 25 lifetime shards) instead of a smooth curve,
+// deliberately chosen over smooth exponential value growth since shard *income* per prestige cycle
+// is itself linear-in-floor — milestone steps stay provably reachable against that, an exponential
+// value curve on top of linear income would just move the same divergence up one layer.
+test('shard milestone multiplier doubles every 25 lifetime shards, not linear', async ({ page }) => {
+  const getMult = () => page.evaluate(() => window.__shardMult());
+  const setShards = (n) => page.evaluate((s) => window.__setTotalShardsEarned(s), n);
+
+  await setShards(0);
+  expect(await getMult()).toBeCloseTo(1, 5); // no milestones hit yet
+
+  await setShards(24);
+  expect(await getMult()).toBeCloseTo(1, 5); // still below the first milestone
+
+  await setShards(25);
+  expect(await getMult()).toBeCloseTo(2, 5); // first milestone: permanent 2x
+
+  await setShards(50);
+  expect(await getMult()).toBeCloseTo(4, 5); // second milestone: 2x again (4x total), not +10% linear
+
+  await setShards(125);
+  expect(await getMult()).toBeCloseTo(32, 5); // 5 milestones hit: 2^5
+});

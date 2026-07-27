@@ -45,6 +45,26 @@ Agreed build order: 8 → 9 → 1a → 2 → 3 → 4 → 7 → 10 → 6 → 5.
 
 ---
 
+## [1.9.0] — 2026-07-26
+
+Progression-curve rebalance (BACKLOG.md #21/#25), driven by a full
+mathematical modeling pass rather than a guessed coefficient tweak — see
+the session's balance-model artifact for the full player-power-vs-
+monster-scale analysis this is based on. Both items share one root
+cause: player power grows via bounded additive percentages (units, gear,
+achievements — all finite), while monster difficulty grew via an
+uncapped geometric curve. Those two curve *shapes* diverge no matter
+what the exponent's coefficient is — lowering 1.8 to, say, 1.6 was
+explicitly modeled and rejected as a fix, since it only delays the same
+wall rather than removing the structural mismatch (modeling put the old
+formula's divergence point around floor 210–260).
+
+### Changed
+- **Monster HP/gold scaling now flattens past tier 14 (floor 150) instead of compounding `1.8^tier` forever.** `monsters.js`'s `getMonsterIdentity()` keeps the original, player-validated `1.8^tier` curve exactly as-is through tier 14 (floors 1–150) — deliberately untouched, since that range was already reported as feeling good — then switches to a much shallower `1.3^tier` continuation past that threshold. Still strictly increasing forever (never flat — the "number always goes up" idle-game feel is preserved), just no longer runaway: floor 200's scale drops from 70,824× to ~13,900× baseline, floor 500 from ~3.2 trillion× to ~36 million×. This also indirectly un-sticks BACKLOG.md #25 (Boss Trophy Room "stuck past floor 240") — the underlying `TIER_PREFIXES` naming table wasn't touched (still 8 entries), but the difficulty-wall complaint that made floor 71+ content scarcity actually painful is now addressed; extending the naming table itself remains a separate, lower-priority content task.
+- **Soul Shard gold multiplier is now milestone-stepped (every 25 lifetime shards permanently doubles it) instead of linear.** The old formula, `1 + totalShardsEarned × 0.1`, was the only source of player power with no ceiling, yet it grew at the same flat, slow rate whether a player had 5 or 5,000 lifetime shards — nowhere near fast enough to be the long-term scaling engine the additive systems can't be. Deliberately NOT made a smooth exponential curve on shard *value*: shard *income* per prestige cycle is itself linear-in-floor (`calcShardsToEarn()`, reset every Ascend), so pairing smooth exponential value with linear income would just relocate the same divergence one layer up. Milestone-stepped doublings stay provably reachable against that linear income instead. New `stats.js`'s `getShardMilestoneMult()`; `ui.js`'s Prestige-tab multiplier display updated to match.
+
+---
+
 ## [1.8.0] — 2026-07-26
 
 Both items sourced from BACKLOG.md's post-launch feedback batches (external
