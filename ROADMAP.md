@@ -4,11 +4,26 @@ Open/forward-looking planning only. Once something is actually released
 to players, its write-up lives in [CHANGELOG.md](CHANGELOG.md) — the
 sole historical record — and is removed from here. A commit existing in
 git is not the same as "shipped": an item only leaves this file once
-it's live for players (see the v1.9.0 entry below for the current
-example of committed-but-held-back work).
+it's live for players.
 
 ## Process/communication decisions (so they aren't re-decided later)
 
+- **The `github-pages` deployment environment must explicitly allow
+  version tags, not just the `main` branch — learned the hard way on
+  v1.9.0's actual release (2026-07-28).** Pushing the `v1.9.0` tag
+  correctly triggered the release workflow and itch.io deployed fine,
+  but the GitHub Pages deploy job failed with `"Tag 'v1.9.0' is not
+  allowed to deploy to github-pages due to environment protection
+  rules"` — the environment's branch policy only had `main` allow-
+  listed (left over from when only branch pushes ever deployed,
+  before the tag-gated release workflow existed). Fixed by adding a
+  `v*` tag pattern via `gh api repos/.../environments/github-pages/
+  deployment-branch-policies -f name='v*' -f type='tag'`, then
+  re-running the failed job. **This is a one-time repo setting, not
+  something to redo per release** — future tag pushes should deploy
+  cleanly now that the policy allows any `v*` tag. If a future release
+  ever hits the same "environment protection rules" error again,
+  check this policy first before assuming it's a workflow bug.
 - **Manually triggering the "CI/CD — Test, Preview & Release" workflow
   (workflow_dispatch) does NOT touch itch.io or the real GitHub Pages
   site — verified twice (2026-07-27).** Investigated a real-seeming
