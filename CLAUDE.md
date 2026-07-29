@@ -9,10 +9,13 @@ game state management.
 
 ## Stack
 
-Single-file vanilla HTML/CSS/JS (`index.html`). State lives in a set of
-top-level JS variables (gold, currentFloor, clickDamage, etc.), the
-`equipment` / `heroes` / `shardShop` / `achievements` arrays, and a
-localStorage save/load pair that runs on a 30s auto-save timer.
+Vanilla HTML/CSS/JS, ES modules under `js/` (no bundler, no build step
+— migrated from a single-file `index.html` in v1.4.0). State lives in
+`state.js`'s exported variables (gold, currentFloor, clickDamage, etc.),
+the `equipment` / `heroes` / `shardShop` / `achievements` arrays in
+their respective modules, and a localStorage save/load pair
+(`save.js`) that runs on a 30s auto-save timer. See README.md's
+"Project Structure" section for the current module layout.
 
 ## Rules for every feature request
 
@@ -29,7 +32,7 @@ localStorage save/load pair that runs on a 30s auto-save timer.
    default in the load function so old saves don't throw undefined
    errors.
 5. **ASK, DON'T ASSUME.** If a design choice affects an already-shipped
-   system (e.g. touches Ascend, or changes an existing achievement's
+   system (e.g. touches Prestige, or changes an existing achievement's
    trigger condition), stop and ask rather than picking unilaterally.
 6. **CLOSE THE LOOP.** When a feature is done and confirmed, check its
    box in `BACKLOG.md` and add a `### Added` entry to `CHANGELOG.md` in
