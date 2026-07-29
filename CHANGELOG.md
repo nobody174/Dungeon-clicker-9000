@@ -18,6 +18,13 @@ When you bump the version, update the number in package.json and add an entry be
 
 ---
 
+## [1.9.2] — 2026-07-29
+
+### Changed
+- **App icon replaced** — swapped the crossed-swords placeholder icon (`icons/icon-192.png`, `icons/icon-512.png`) for the new DC9000 logo artwork.
+
+---
+
 ## [1.9.1] — 2026-07-28
 
 ### Fixed
