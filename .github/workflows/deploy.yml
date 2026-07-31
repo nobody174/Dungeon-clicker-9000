@@ -53,8 +53,10 @@ jobs:
           retention-days: 7
 
   # ── Job 2: Preview deploy — manual trigger only, never on a plain push/tag ──
-  # Publishes to https://<user>.github.io/<repo>/preview/ instead of the site root, so it never
-  # overwrites (or looks like) the real release — safe to run as often as needed while testing.
+  # Publishes to https://<user>.github.io/<repo>/preview/ instead of the site root.
+  # actions/deploy-pages REPLACES the whole site on every deploy (no merging across runs), so this
+  # job also rebuilds the root from the latest release tag's source and re-uploads it unchanged
+  # alongside the new preview build — otherwise a preview deploy would wipe out the live root site.
   deploy-preview:
     name: 🔍 Deploy Preview (manual only)
     needs: test
@@ -65,6 +67,8 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - uses: actions/setup-node@v4
         with:
@@ -72,6 +76,19 @@ jobs:
 
       - name: Setup Pages
         uses: actions/configure-pages@v5
+
+      - name: Rebuild root site from latest release tag
+        run: |
+          latest_tag=$(git tag --list 'v*' --sort=-v:refname | head -n1)
+          mkdir -p pages-build
+          if [ -n "$latest_tag" ]; then
+            git worktree add /tmp/release-src "$latest_tag"
+            cp /tmp/release-src/index.html pages-build/
+            cp -r /tmp/release-src/js pages-build/
+            cp /tmp/release-src/manifest.json pages-build/ 2>/dev/null || true
+            cp -r /tmp/release-src/icons pages-build/ 2>/dev/null || true
+            node /tmp/release-src/scripts/stamp-versions.js pages-build
+          fi
 
       - name: Prepare version-stamped preview build
         run: |
@@ -122,6 +139,16 @@ jobs:
           cp manifest.json pages-build/ 2>/dev/null || true
           cp -r icons pages-build/ 2>/dev/null || true
           node scripts/stamp-versions.js pages-build
+
+      # actions/deploy-pages REPLACES the whole site on every deploy (no merging across runs), so
+      # a release also carries forward whatever is currently live under /preview/ — otherwise
+      # releasing would wipe out an in-progress phone test that hasn't been released yet.
+      - name: Preserve currently-live preview build
+        run: |
+          site_url="https://${{ github.repository_owner }}.github.io/$(basename '${{ github.repository }}')"
+          if wget -q --spider "$site_url/preview/index.html"; then
+            wget -q -r -np -nH --cut-dirs=1 -P pages-build "$site_url/preview/" || true
+          fi
 
       - name: Upload site
         uses: actions/upload-pages-artifact@v3
