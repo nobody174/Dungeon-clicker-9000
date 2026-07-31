@@ -18,6 +18,13 @@ When you bump the version, update the number in package.json and add an entry be
 
 ---
 
+## [1.9.3] — 2026-08-01
+
+### Added
+- **Privacy policy page** (`privacy.html`) — required for Google Play submission. States plainly that the game collects no data; all progress is stored locally via localStorage.
+
+---
+
 ## [1.9.2] — 2026-07-29
 
 ### Changed

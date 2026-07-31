@@ -87,6 +87,7 @@ jobs:
             cp -r /tmp/release-src/js pages-build/
             cp /tmp/release-src/manifest.json pages-build/ 2>/dev/null || true
             cp -r /tmp/release-src/icons pages-build/ 2>/dev/null || true
+            cp /tmp/release-src/privacy.html pages-build/ 2>/dev/null || true
             node /tmp/release-src/scripts/stamp-versions.js pages-build
           fi
 
@@ -138,6 +139,7 @@ jobs:
           cp -r js pages-build/
           cp manifest.json pages-build/ 2>/dev/null || true
           cp -r icons pages-build/ 2>/dev/null || true
+          cp privacy.html pages-build/ 2>/dev/null || true
           node scripts/stamp-versions.js pages-build
 
       # actions/deploy-pages REPLACES the whole site on every deploy (no merging across runs), so
