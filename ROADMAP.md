@@ -6,73 +6,63 @@ sole historical record — and is removed from here. A commit existing in
 git is not the same as "shipped": an item only leaves this file once
 it's live for players.
 
-## Current status / where things stand (2026-07-28) — read this first next session
+## Current status / where things stand (2026-08-01) — read this first next session
 
-- **✅ Repo history cleanup done (2026-07-28): `node_modules/` fully
-  purged from all git history via `git-filter-repo`, not just untracked
-  going forward.** 1,310 third-party dependency files had been committed
-  since `d8fb084` (the original CI/CD setup commit) despite `.gitignore`
-  listing `node_modules/` — the rule only prevented new files, it never
-  retroactively removed what was already tracked. Rewrote all 69 commits
-  to strip the folder entirely; `.git` size dropped ~91% (7.1M → 621K).
-  All 9 version tags survived intact (git-filter-repo automatically
-  re-pointed them to their new commit hashes — no manual tag recreation
-  needed). Verified with a full mirror backup taken first, then a
-  completely fresh clone from GitHub afterward (dependencies installed
-  from scratch, full 26/26 test suite passing) before considering this
-  done. Chosen to do this now rather than defer, specifically because
-  almost no one has cloned the repo yet (pre-Play-Store-launch) — the
-  same cleanup gets meaningfully more disruptive to do later once more
-  clones/forks/CI systems depend on the existing commit history.
-- **Blocked on: Google Play Console developer ID verification.** Submitted
-  ID card + (after a second request) passport; told it could take a few
-  days. Nothing else can move on the Play Store side until this clears.
-  Everything else below is ready and waiting for that.
-- **A full local Android test pipeline is set up and working**, separate
-  from this repo (not tracked in git here — its own folder, not yet its
-  own git repo either):
-  - Project folder: `D:\Claude AI Projects\projects\GitHub\dungeon-clicker-android`
-    (Bubblewrap-generated TWA wrapper — Gradle/Android Studio project,
-    points at the game via a live URL, contains no game code itself).
-  - Signing keystore: `android.keystore` in that folder, alias `android`.
-    **Backed up** to `C:\Users\Vartd\Desktop\Learning AI\vscode\android.keystore`
-    — still only on this one machine; a real off-machine backup (cloud/
-    password manager) is still outstanding. Losing this file + its
-    password permanently blocks future updates to whatever Play listing
-    it eventually signs.
-  - Application ID (permanent once published): `io.github.nobody174.dungeonclicker9000`.
-  - The app currently installs and runs correctly on a real Android
-    phone, pointed at `.../Dungeon-clicker-9000/preview/` (the
-    manually-triggered preview deploy path, separate from the real
-    site) — confirmed working end-to-end, including catching and fixing
-    a real multi-touch bug (see CHANGELOG.md 1.9.1) that only surfaced
-    on a real touchscreen.
-  - To test a new build on the phone again: trigger the deploy workflow
-    manually (Actions tab → "Run workflow"), confirm `/preview/js/version.js`
-    shows the expected version, then just reopen the already-installed
-    app on the phone (no rebuild needed — it re-fetches the page live
-    each time). Only rebuild in Android Studio if changing the icon/app
-    name/manifest settings, not for ordinary gameplay code changes.
-  - GitHub Pages `github-pages` environment now explicitly allows `v*`
-    tag deploys (was `main`-branch-only before, fixed 2026-07-28) — a
-    real release should deploy cleanly without needing a manual re-run
-    this time.
-- **v1.9.0 and v1.9.1 are both already live** on GitHub Pages + itch.io
-  (progression rebalance, terminology fix, multi-touch fix, and the
-  large-number display fix) — CHANGELOG.md is fully up to date, nothing
-  from tonight is still sitting held-back.
-- **A GitHub personal access token was briefly exposed in plaintext in
-  git remote URLs earlier this session** — regenerated on GitHub's side
-  immediately, remotes cleaned to plain HTTPS, git auth now goes through
-  GitHub CLI's securely-stored OAuth token instead. Resolved, not an
-  ongoing concern — noted here only so a future session doesn't
-  rediscover this in old chat history and re-raise an already-closed
-  issue.
-- **Next intended step once Play Console access clears:** upload the
-  Android build (bump its internal version code, rebuild via
-  `bubblewrap build` or Android Studio, upload the `.aab` manually —
-  this part is NOT automated by the GitHub Actions workflow, unlike
-  Pages/itch.io) and go through the Play Store listing setup.
+- **Google Play publishing is fully in progress — actively waiting on
+  testers, not blocked on anything technical.** Everything below is done;
+  the only remaining step is time + tester signups.
+- **Play Console app is live and correctly configured:**
+  package `io.github.nobody174.dungeonclicker9000`, all compliance
+  sections submitted and cleared (privacy policy, data safety — declared
+  "no data collected," content rating questionnaire, ads/financial
+  features/health/government-app declarations all "No," target age
+  includes children so the app is committed to the Play Families Policy,
+  store listing with description/screenshots/icon/feature graphic all
+  filled in).
+- **Privacy policy is live**: `https://nobody174.github.io/Dungeon-clicker-9000/privacy.html`
+  (added in v1.9.3 — states plainly the game collects no data at all).
+- **The Android wrapper project now has its own git repo and is on
+  GitHub**: https://github.com/nobody174/dungeon-clicker-android (public
+  — the signing keystore and its password are gitignored, never
+  committed; see that repo's README for how to restore them on a new
+  machine). Previously this folder existed only on the desktop with no
+  version control — fixed 2026-08-01.
+  - Application ID (permanent): `io.github.nobody174.dungeonclicker9000`.
+  - `bubblewrap build`'s interactive password prompt doesn't work from
+    non-interactive/piped shells (hangs after the first prompt). Build
+    via Gradle directly instead — see that repo's README for the exact
+    command (uses `DC9000_KEYSTORE_PASSWORD`/`DC9000_KEYSTORE_PATH` env
+    vars against a `signingConfigs` block added to `app/build.gradle`).
+  - Current build: version code 6, pointed at the live root site
+    (`https://nobody174.github.io/Dungeon-clicker-9000/`), not `/preview/`
+    — earlier phone-testing builds used `/preview/`, switched to the
+    real site once ready to upload to Play Console.
+- **Internal testing**: done, confirmed working — installed via Play
+  Store (not sideloaded) and tested live on a real phone.
+- **Closed testing**: track is live, release submitted and passed
+  Google's review. **Currently at the tester-recruitment stage** — Play
+  Store requires **12 testers opted in, sustained for 14 continuous
+  days** before Production access unlocks (this is a one-time gate for
+  a new developer account's first app, not something repeated per
+  future update). Recruiting via:
+  - Discord: posted in the "Alpha Beta Gamer" server's testing channel.
+  - Google Group (self-service join, so recruits don't need to be
+    manually added one-by-one in Play Console): `dc9000-testers@googlegroups.com`,
+    join at https://groups.google.com/g/dc9000-testers
+  - Play Store opt-in link (paired with the group join): shared
+    alongside the group link in the recruiting post.
+- **Next actual milestone**: once 12 testers have opted in and stayed
+  opted in for 14 days, Play Console unlocks the "Apply for production
+  access" flow — that's a Play Console UI step, not a code/build task.
+- **GitHub Pages deploy pipeline bug fixed (2026-07-31/08-01)**: the
+  `/preview/` deploy job and the real tag-triggered release deploy job
+  were both fully replacing the whole Pages site on every deploy
+  (`actions/deploy-pages` doesn't merge across runs) — whichever ran
+  most recently silently wiped the other one out. This caused the real
+  root site to 404 for a while despite CI reporting success. Fixed by
+  making each job also rebuild/carry-forward the other's content (see
+  `.github/workflows/deploy.yml` comments) — confirmed both `/` and
+  `/preview/` now survive being deployed in any order.
 
 ## Process/communication decisions (so they aren't re-decided later)
 
